@@ -11,6 +11,7 @@ class espaceConceptuel {
         this.height = params.height ? params.height : 600;
         this.width = params.width ? params.width : 600;
         this.id = params.id ? params.id : 0;
+        this.showGrille = params.showGrille ? params.showGrille : true;
         var svg, container, color, hierarchie, cBand, hexbin;
 
         this.init = function () {
