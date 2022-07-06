@@ -8,12 +8,81 @@
     <script src="asset/js/d3.min.js"></script>
     <script src="asset/js/d3-hexbin.min.js"></script>
     <script src="asset/js/espaceConceptuel.js"></script>
+    <script src="asset/js/hex-lib.js"></script>
+    <script src="asset/js/hex-algorithms.js"></script>
 </head>
 <body>
     <div id="ec"></div>
+    <div id="grid"></div>
 </body>
 <script>
-    let oEc = new espaceConceptuel({'idCont':'ec'});
+    let oEc = new espaceConceptuel({'idCont':'ec'}),
+    hexas = makeHexagonalShape(1),
+    layout = new Layout(Layout.flat, new Point(100, 100), new Point(0, 0)),
+    padding = 20,
+    vb = getViewBox(hexas),
+    polygonVerticesFlat = layout
+            .polygonCorners(new Hex(0,0,0))
+            .map(p=>`${p.x.toFixed(0)},${p.y.toFixed(0)}`)
+            .join(" "),
+    svgG = d3.select('#grid').append('svg')
+        .attr('id','svgCpt_0')
+        //.attr('width',100).attr('height',100)
+        .attr('viewBox',vb.join(' ')),
+    gCpt = svgG.selectAll('g').data(hexas).enter().append('g')
+        .attr('id',(h,i)=>{
+            h.niv = 0;
+            h.id = 'gCpt_'+h.niv+'_'+i;
+            return h.id;
+        })
+        .attr('transform',h=>hexCenter(h).transform),
+    polys = gCpt.append('polygon').attr('points',polygonVerticesFlat)
+            .attr('fill','red').attr('stroke','black'),
+    center = gCpt.append('circle').attr('x',0).attr('y',0).attr('r',10)
+            .attr('fill','green').attr('stroke','black')
+            .on('click',addEC);
+
+    function hexCenter(hex) {
+        let p = layout.hexToPixel(hex);
+        return {
+            x: p.x,
+            y: p.y,
+            transform: `translate(${p.x.toFixed(0)},${p.y.toFixed(0)})`,
+        }
+    }
+    function getViewBox(hexas) {
+        let rect = hexSetBounds(layout, hexas),
+        left = rect.left - padding,
+        top = rect.top - padding,
+        width = rect.right - rect.left + 2 * padding,
+        height = rect.bottom - rect.top + 2 * padding;
+        return [left, top, width, height];
+    }
+    function addEC(e,d){
+        let p = hexCenter(d), n=d3.select('#'+d.id).node(),
+        bb = n.getBBox(),
+        rect = n.getBoundingClientRect(),
+        svg = svgG.append('svg')
+            .attr('id','svgCpt_'+(d.niv+1))
+            .attr('width',bb.width).attr('height',bb.height)
+            .attr('viewBox',vb.join(' '))
+            .attr('x',p.x+bb.x)
+            .attr('y',p.y+bb.y)
+        hexas = makeHexagonalShape(1),
+        gCpt = svg.selectAll('g').data(hexas).enter().append('g')
+            .attr('id',(h,i)=>{
+                h.niv = d.niv+1;
+                h.id = 'gCpt_'+h.niv+'_'+i;
+                return h.id;
+            })
+        .attr('transform',h=>hexCenter(h).transform),
+        polys = gCpt.append('polygon').attr('points',polygonVerticesFlat)
+                .attr('fill','red').attr('stroke','black'),
+        center = gCpt.append('circle').attr('x',0).attr('y',0).attr('r',10)
+                .attr('fill','green').attr('stroke','black')
+                .on('click',addEC);        
+
+    }
 
 </script>
 </html>
