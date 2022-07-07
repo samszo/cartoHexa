@@ -19,25 +19,26 @@
     let oEc = new espaceConceptuel({'idCont':'ec'}),
     hexas = makeHexagonalShape(1),
     layout = new Layout(Layout.flat, new Point(100, 100), new Point(0, 0)),
-    padding = 20,
+    padding = 0,
     vb = getViewBox(hexas),
     polygonVerticesFlat = layout
             .polygonCorners(new Hex(0,0,0))
             .map(p=>`${p.x.toFixed(0)},${p.y.toFixed(0)}`)
             .join(" "),
     svgG = d3.select('#grid').append('svg')
-        .attr('id','svgCpt_0')
+        .attr('id','svgPlan_0')
         //.attr('width',100).attr('height',100)
         .attr('viewBox',vb.join(' ')),
     gCpt = svgG.selectAll('g').data(hexas).enter().append('g')
         .attr('id',(h,i)=>{
             h.niv = 0;
-            h.id = 'gCpt_'+h.niv+'_'+i;
+            h.id = 'gPlan_'+h.niv+'_'+h.q+'_'+h.r+'_'+h.s;
+            h.idSvg = 'svgPlan_0';
             return h.id;
         })
         .attr('transform',h=>hexCenter(h).transform),
     polys = gCpt.append('polygon').attr('points',polygonVerticesFlat)
-            .attr('fill','red').attr('stroke','black'),
+            .attr('fill','#86abcb42').attr('stroke','black'),
     center = gCpt.append('circle').attr('x',0).attr('y',0).attr('r',10)
             .attr('fill','green').attr('stroke','black')
             .on('click',addEC);
@@ -59,29 +60,47 @@
         return [left, top, width, height];
     }
     function addEC(e,d){
-        let p = hexCenter(d), n=d3.select('#'+d.id).node(),
-        bb = n.getBBox(),
-        rect = n.getBoundingClientRect(),
+        let ps = getPosiScale(d),
         svg = svgG.append('svg')
-            .attr('id','svgCpt_'+(d.niv+1))
-            .attr('width',bb.width).attr('height',bb.height)
+            .attr('id','svgPlan_'+(d.niv+1)+'_'+d.q+'_'+d.r+'_'+d.s)
+            .attr('width',ps.width).attr('height',ps.height)
             .attr('viewBox',vb.join(' '))
-            .attr('x',p.x+bb.x)
-            .attr('y',p.y+bb.y)
+            .attr('x',ps.x)
+            .attr('y',ps.y)
         hexas = makeHexagonalShape(1),
         gCpt = svg.selectAll('g').data(hexas).enter().append('g')
             .attr('id',(h,i)=>{
                 h.niv = d.niv+1;
-                h.id = 'gCpt_'+h.niv+'_'+i;
+                h.id = 'gPlan_'+h.niv+'_'+d.q+'_'+d.r+'_'+d.s+'_'+h.q+'_'+h.r+'_'+h.s;
+                h.idSvg = svg.attr('id');
+                h.idSvgP = d.idSvg;
                 return h.id;
             })
         .attr('transform',h=>hexCenter(h).transform),
         polys = gCpt.append('polygon').attr('points',polygonVerticesFlat)
-                .attr('fill','red').attr('stroke','black'),
+                .attr('fill','#86abcb42').attr('stroke','black'),
         center = gCpt.append('circle').attr('x',0).attr('y',0).attr('r',10)
                 .attr('fill','green').attr('stroke','black')
                 .on('click',addEC);        
 
+    }
+    function getPosiScale(d){
+        let p = hexCenter(d), n=d3.select('#'+d.id).node(), 
+        bb = n.getBBox();
+        if(d.niv > 0){
+            let svg = d3.select('#'+d.idSvg), svgP = d3.select('#'+d.idSvgP),
+            rectG = svgG.node().getBoundingClientRect(), 
+            rectP = svgP.node().getBoundingClientRect(), 
+            rect = svg.node().getBoundingClientRect(),        
+            sT = rectP.width / rect.width,
+            sP = rectG.width / rect.width,
+            w = Math.round(Number(svg.attr('width'))/sT),
+            h = Math.round(Number(svg.attr('height'))/sT),
+            x = Math.round(Number(svg.attr('x'))+w+(p.x/sP)),
+            y = Math.round(Number(svg.attr('y'))+h+(p.y/sP));
+            return {'x':x,'y':y, 'width': w, 'height':h}
+        }else  
+            return {'x':p.x+bb.x,'y':p.y+bb.y, 'width': bb.width, 'height':bb.height}
     }
 
 </script>
