@@ -6,8 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Espace conceptuel</title>
     <script src="asset/js/d3.min.js"></script>
-    <script src="asset/js/d3-hexbin.min.js"></script>
-    <script src="asset/js/espaceConceptuel.js"></script>
+    <script src="asset/js/cartoHexa.js"></script>
     <script src="asset/js/hex-lib.js"></script>
     <script src="asset/js/hex-algorithms.js"></script>
     <style type="text/css">
@@ -25,115 +24,7 @@
 <body>
     <div id="ec" ></div>
 </body>
-<script>
-    let oEc = 1,//new espaceConceptuel({'idCont':'ec'}),
-    planExtent = 64, eventCreate = 'click',//"mouseover",//
-    //layout toujours flat pour garder un coté en relation avec le parent
-    layoutBase = new Layout(Layout.flat, new Point(100, 100), new Point(0, 0)),
-    rectEC = d3.select('#ec').node().getBoundingClientRect(), 
-    padding = 0, width = rectEC.width, height = rectEC.height,
-    svgCartoHexa = d3.select('#ec').append('svg')
-        .attr('id','svgCartoHexa')
-        .attr('width',width).attr('height',height)
-        ,//.attr('viewBox',vb.join(' ')),
-    container = svgCartoHexa.append("g");
-    svgCartoHexa.call(
-        d3.zoom()
-            //.scaleExtent([.1, planExtent])
-            .on('zoom', (event) => {
-                container.attr('transform', event.transform);
-                })                        
-    ),
-    //initialise l'espace conceptuel suivant le nombre de concept
-    svgG = initEC(planExtent),
-    //récupère la taille de base de l'heaxagone pour les zoom et déplacement
-    rectBase = d3.select('#gPlan0_0_0_0').node().getBoundingClientRect(); 
-
-
-    function hexCenter(hex, layout) {        
-        let p = layout.hexToPixel(hex),
-        x = p.x, 
-        y = p.y;
-        return {
-            'x': x,
-            'y': y,
-            transform: `translate(${x},${y})`,
-        }
-    }
-    function getViewBox(hexas) {
-        let rect = hexSetBounds(layoutBase, hexas),
-        left = rect.left - padding,
-        top = rect.top - padding,
-        width = rect.right - rect.left + 2 * padding,
-        height = rect.bottom - rect.top + 2 * padding;
-        return [left, top, width, height];
-    }
-    //création de la grille vide
-    function initEC(nbShape){
-        let hexas = makeHexagonalShape(nbShape),
-        polygonVerticesFlat = layoutBase
-            .polygonCorners(new Hex(0,0,0))
-            .map(p=>`${p.x},${p.y}`)
-            .join(" "),            
-        vb = getViewBox(hexas),
-        svg = container.append('svg')
-            .attr('id','svgPlan0')
-            .attr('width',width*nbShape).attr('height',height*nbShape)
-            .attr('x',-width*nbShape/2-layoutBase.size.x).attr('y',-height*nbShape/2-layoutBase.size.y)
-            .attr('viewBox',vb.join(' '))
-            .selectAll('g').data(hexas).enter().append('g')
-            .attr('id',(h,i)=>{
-                h.laysize = layoutBase.size;
-                h.subShapeDetail = 1;
-                h.niv = 0;
-                h.id = 'gPlan'+h.niv+'_'+h.q+'_'+h.r+'_'+h.s;
-                h.idSvg = 'svgPlan0';
-                return h.id;
-            })
-            .attr('transform',h=>hexCenter(h,layoutBase).transform)
-            .on(eventCreate,addEC),
-        polys = svg.append('polygon').attr('points',polygonVerticesFlat)
-                .attr('fill','#86abcb42').attr('stroke','black')
-                ;            
-        return svg;
-    }
-
-    function addEC(e,d){
-        let hexas = makeHexagonalShape(d.subShapeDetail),
-        layout = new Layout(Layout.flat, new Point(d.laysize.x/(d.subShapeDetail*2+1), d.laysize.y/(d.subShapeDetail*2+1)), new Point(0, 0)),
-        polygonVerticesFlat = layout
-            .polygonCorners(new Hex(0,0,0))
-            .map(p=>`${p.x},${p.y}`)
-            .join(" "),            
-        s = d3.select('#'+d.id), n = s.node(), bb = n.getBBox(),
-        gCpt = s.selectAll('g').data(hexas).enter().append('g')
-            .attr('id',(h,i)=>{
-                h.subShapeDetail = d.subShapeDetail;
-                h.laysize = layout.size;
-                h.niv = d.niv+1;
-                h.id = d.id+'gPlan'+h.niv+'_'+h.q+'_'+h.r+'_'+h.s;
-                return h.id;
-            })
-        .attr('transform',h=>{
-            return hexCenter(h, layout).transform
-        }),
-        polys = gCpt.append('polygon').attr('points',polygonVerticesFlat)
-                .attr('fill','#86abcb42').attr('stroke','black').attr('stroke-width',h=>1/h.niv/2)
-                .on('click',clickHex);
-                //le centre est réserver à la description de l'espace
-        /*        ,
-        center = gCpt.append('circle').attr('x',0).attr('y',0).attr('r',10)
-                .attr('fill','green').attr('stroke','black')
-                .on('mouseover',addEC);
-        */
-    }
-    function updateEC(e,d){
-        console.log(d);
-    }
-    function clickHex(e,h){
-        if(h.q == 0 && h.r == 0 && h.r == 0) updateEC(e,h);
-        else addEC(e,h);
-    }
-
+<script>    
+    let carte = new cartoHexa({'idCont':'ec'});
 
 </script>
