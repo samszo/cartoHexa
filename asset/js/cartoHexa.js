@@ -1,19 +1,24 @@
+//un grand merci à https://www.redblobgames.com/grids/hexagons/
 "use strict";
 class cartoHexa {
     constructor(params) {
         var me = this;
-        this.data = params.data ? params.data : {"children":[
-            {"id": 1,"o:title": "vide", "value":1}
-            ,{"id": 2,"o:title": "plein", "value":1}
+        this.data = params.data ? params.data : {
+            "o:id": 1,"o:title": "Carte exemple", "children":[
+                {"o:id": 11,"o:title": "vide", "children":[
+                    {"o:id": 111,"o:title": "encore vide"}
+                    ,{"o:id": 112,"o:title": "toujours plein"}
+            ]}
+                ,{"o:id": 12,"o:title": "plein"}
         ]};
         this.cont = d3.select("#"+params.idCont);
         this.fontSize = params.fontSize ? params.fontSize : 1;
         this.id = params.id ? params.id : 'ch0';
-        this.planExtent = params.planExtent ? params.planExtent : 64;
+        this.planExtent = params.planExtent ? params.planExtent : 16;
         this.eventCreate = params.eventCreate ? params.eventCreate : 'click';
         var layoutBase, rectCarto = me.cont.node().getBoundingClientRect(), 
         padding = 0, width = rectCarto.width, height = rectCarto.height,
-        svg, rectBase, container, hierarchie, defText="le vide c'est bien";
+        svg, rectBase, container, hierarchie, defText="vide", allHexa, takenHexa=[];
 
         this.init = function () {
 
@@ -23,8 +28,7 @@ class cartoHexa {
             this.cont.select('svg').remove();
             svg = this.cont.append('svg')
                 .attr('id','svgCartoHexa'+me.id)
-                .attr('width',width).attr('height',height)
-                ,//.attr('viewBox',vb.join(' ')),
+                .attr('width',width).attr('height',height),
             container = svg.append("g");
             svg.call(
                 d3.zoom()
@@ -35,10 +39,18 @@ class cartoHexa {
             );
             hierarchie = d3.hierarchy(me.data);
 
-            //initialise l'espace conceptuel suivant le nombre de concept
+            //initialise la cartographie suivant le nombre d'élément
             initHexa(me.planExtent);
+            //ajoute les data
+            addTitle(hierarchie);
+            addChildren(hierarchie);
  
     };
+
+    function ExceptionCartoHexa(message) {
+        this.message = message;
+        this.name = "ExceptionCartoHexa";
+     }    
 
     function hexCenter(hex, layout) {        
         let p = layout.hexToPixel(hex),
@@ -60,24 +72,24 @@ class cartoHexa {
     }
     //création de la grille vide
     function initHexa(nbShape){
-        let hexas = makeHexagonalShape(nbShape),
-        polygonVerticesFlat = layoutBase
+        allHexa = makeHexagonalShape(nbShape);
+        let polygonVerticesFlat = layoutBase
             .polygonCorners(new Hex(0,0,0))
             .map(p=>`${p.x},${p.y}`)
             .join(" "),            
-        vb = getViewBox(hexas),
+        vb = getViewBox(allHexa),
+        scale = 1,
         svgHexa = container.append('svg')
             .attr('id','svgPlan0')
-            .attr('width',width*nbShape).attr('height',height*nbShape)
-            .attr('x',-width*nbShape/2-layoutBase.size.x).attr('y',-height*nbShape/2-layoutBase.size.y)
+            .attr('width',vb[2]*scale).attr('height',vb[3]*scale)
+            .attr('x',vb[0]*scale+width/2).attr('y',vb[1]*scale+height/2)
             .attr('viewBox',vb.join(' '))
-            .selectAll('g').data(hexas).enter().append('g')
+            .selectAll('g').data(allHexa).enter().append('g')
             .attr('id',(h,i)=>{
                 h.laysize = layoutBase.size;
                 h.subShapeDetail = 1;
-                h.niv = 0;
-                h.id = me.id+'gPlan'+h.niv+'_'+h.q+'_'+h.r+'_'+h.s;
-                h.idSvg = me.id+'svgPlan0';
+                h.depth = 0;
+                h.id = me.id+'gPlan'+h.depth+'_'+h.q+'_'+h.r+'_'+h.s;
                 return h.id;
             })
             .attr('transform',h=>hexCenter(h,layoutBase).transform)
@@ -87,63 +99,121 @@ class cartoHexa {
                 ;            
         return svgHexa;
     }
+    //ajoute le titre de la carte
+    function addTitle(d){
 
-    function addHexa(e,d){
-        let hexas = makeHexagonalShape(d.subShapeDetail),
-        layout = new Layout(Layout.flat, new Point(d.laysize.x/(d.subShapeDetail*2+1), d.laysize.y/(d.subShapeDetail*2+1)), new Point(0, 0)),
-        labelAvailableWidth = layout.size.x,
+        let gCenter = svg.select('#'+me.id+'gPlan0_0_0_0').append('g')
+            .attr('id',me.id+'gTitre')
+        .attr('transform',hexCenter(new Hex(0,0,0), layoutBase).transform);
+        gCenter.append("text")
+            .attr('id',h=>{
+                h.title = d.data['o:title'] ? d.data['o:title'] : defText; 
+                d.laysize = h.laysize;
+                d.subShapeDetail = h.subShapeDetail;
+                d.id = h.id;
+                return 'chText_'+me.id
+            })
+            .attr('text-anchor','middle')
+            .attr('alignment-baseline',"middle")
+            .text(h=>h.title)
+            .attr('fill','white')
+            .attr("font-size", function(){
+                return (layoutBase.size.x / this.getComputedTextLength()) + 'em'
+            });
+        takenHexa['0_0_0_0']=gCenter;
+
+    }
+    //ajoute les efants d'un hexa
+    function addChildren(d){
+        if(!d.children)return;
+        d.children.forEach(c=>{
+            //vérifie si la donnée a une place
+            let i = 1;
+            while (c.q == undefined) {
+                //récupère la première place disponible du centre vers l'extérieur
+                hexRing(i).every(h=>{       
+                    let id = d.depth==0 ? me.id : d.id;
+                    id += 'gPlan'+d.depth+'_'+h.q+'_'+h.r+'_'+h.s;                
+                    if(!takenHexa[id]){
+                        c.q = h.q;
+                        c.r = h.r;
+                        c.s = h.s;
+                        c.title=c.data['o:title'];
+                        c.id= id;
+                        c.laysize = d.laysize;
+                        c.subShapeDetail = 1;
+                        return false;
+                    }
+                    return true
+                })
+                i++;
+                if(i > me.planExtent)throw new ExceptionCartoHexa("Plus de place disponible dans la carte");
+            }
+            //création de l'hexa
+            addHexa(null,c);
+            //création des enfants
+            let layout = new Layout(Layout.flat, new Point(c.laysize.x/(c.subShapeDetail*2+1), c.laysize.y/(c.subShapeDetail*2+1)), new Point(0, 0));
+            c.laysize = layout.size; 
+            addChildren(c);
+        })
+
+    }
+
+
+    //ajoute un hexagone
+    function addHexa(e,hp){
+        if(takenHexa[hp.id])return;
+
+        let hexas = makeHexagonalShape(hp.subShapeDetail),
+        layout = new Layout(Layout.flat, new Point(hp.laysize.x/(hp.subShapeDetail*2+1), hp.laysize.y/(hp.subShapeDetail*2+1)), new Point(0, 0)),
         polygonVerticesFlat = layout
             .polygonCorners(new Hex(0,0,0))
             .map(p=>`${p.x},${p.y}`)
             .join(" "),            
-        s = svg.select('#'+d.id), n = s.node(), bb = n.getBBox(),
-        gCpt = s.selectAll('g').data(hexas).enter().append('g')
+        s = svg.select('#'+hp.id), //n = s.node(), bb = n.getBBox(),
+        gHexa = s.selectAll('g').data(hexas).enter().append('g')
             .attr('id',(h,i)=>{
-                h.subShapeDetail = d.subShapeDetail;
+                h.subShapeDetail = hp.subShapeDetail;
                 h.laysize = layout.size;
-                h.niv = d.niv+1;
-                h.id = d.id+'gPlan'+h.niv+'_'+h.q+'_'+h.r+'_'+h.s;
+                h.depth = e ? hp.depth+1 : hp.depth;//gestion ajout manuel ou data
+                h.id = hp.id+'gPlan'+h.depth+'_'+h.q+'_'+h.r+'_'+h.s;    
                 return h.id;
             })
         .attr('transform',h=>{
             return hexCenter(h, layout).transform
         }),
-        polys = gCpt.append('polygon').attr('points',polygonVerticesFlat)
-                .attr('fill','#86abcb42').attr('stroke','black').attr('stroke-width',h=>1/h.niv/3)
+        polys = gHexa.append('polygon').attr('points',polygonVerticesFlat)
+                .attr('fill','#86abcb42').attr('stroke','black').attr('stroke-width',h=>1/h.depth/10)
                 .on('click',clickHex);
         //le centre est réserver à la description de l'espace
         /*        ,
-        center = gCpt.append('circle').attr('x',0).attr('y',0).attr('r',10)
+        center = gHexa.append('circle').attr('x',0).attr('y',0).attr('r',10)
                 .attr('fill','green').attr('stroke','black')
                 .on('mouseover',addHexa);
         */        
         //ajoute les titres
-        gCpt.append("text")
-            .attr('id',d=>{
-                if(d.q == 0 && d.r == 0 && d.r == 0)
-                    d.title = d['o:title'] ? d['o:title'] : defText; 
-                else d.title = "";
-                return 'chText_'+d.id
+        gHexa.append("text")
+            .attr('id',h=>{
+                if(h.q == 0 && h.r == 0 && h.r == 0)
+                    h.title = hp.title ? hp.title : defText; 
+                else h.title = "";
+                return 'chText_'+h.id
             })
-            //
+            /*
             .selectAll("tspan")
             .data(d => d.title.split(/(?=[A-Z][a-z])|\s+/g))
             .join("tspan")
             .attr("x", 0)
             .attr("y", (d, i, nodes) => `${i - nodes.length / 2 + 0.8}em`)
-            //
+            */
             .attr('text-anchor','middle')
-            //.text(d=>d.title)
-            .attr("font-size", adaptLabelFontSize)
-            ;
+            .attr('alignment-baseline',"middle")
+            .text(h=>h.title)
+            .attr("font-size", adaptLabelFontSize);
+        
+        takenHexa[hp.id]=gHexa;
 
         function adaptLabelFontSize(d) {
-            let labelWidth =  this.getComputedTextLength();
-            
-            // There is enough space for the label so leave it as is.
-            if (labelWidth < labelAvailableWidth) {
-                return null;
-            }
             /*
                 * The meaning of the ratio between labelAvailableWidth and labelWidth equaling 1 is that
                 * the label is taking up exactly its available space.
@@ -153,10 +223,10 @@ class cartoHexa {
                 * the label is taking up twice its available space.
                 * With the result as `0.5em` the font will change to half its original size.
                 */
-            return (labelAvailableWidth / labelWidth) + 'em';
+            return (layout.size.x / this.getComputedTextLength()) + 'em';
         } 
-
     }
+
    
     function updateHexa(e,d){
         console.log(d);
