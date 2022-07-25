@@ -1,3 +1,2 @@
-# espaceConceptuel
-Projet de cartographie des expace conceptuels.
-trop bien
+# cartoHexa
+Projet de cartographie des expaces existentiels à partir d'un pavage hexagonal.
