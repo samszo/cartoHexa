@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Espace conceptuel</title>
+    <title>CartoHexa</title>
     <script src="asset/js/d3.min.js"></script>
     <script src="asset/js/cartoHexa.js"></script>
     <script src="asset/js/hex-lib.js"></script>
@@ -22,9 +22,11 @@
     </style>    
 </head>
 <body>
-    <div id="ec" ></div>
+        <div id="ec" ></div>
 </body>
-<script>    
-    let carte = new cartoHexa({'idCont':'ec'});
+<script>
+    //récupère les data
+    let url = 'http://localhost/samszo/omk/s/cartoaffect/page/ajax?json=1&helper=CartoHexa&action=getAllConcept&minVal=100&maxVal=2000';
+    let carte = new cartoHexa({'idCont':'ec','urlData':url});
 
 </script>

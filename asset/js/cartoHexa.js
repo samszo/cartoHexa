@@ -3,30 +3,44 @@
 class cartoHexa {
     constructor(params) {
         var me = this;
+        this.urlData = params.urlData ? params.urlData : false;
         this.data = params.data ? params.data : {
             "o:id": 1,"o:title": "Carte exemple", "children":[
-                {"o:id": 11,"o:title": "vide", "children":[
-                    {"o:id": 111,"o:title": "encore vide"}
-                    ,{"o:id": 112,"o:title": "toujours plein"}
+                {"o:id": 11,"o:title": "vide", "value":1, "children":[
+                    {"o:id": 111,"o:title": "encore vide", "value":1}
+                    ,{"o:id": 112,"o:title": "toujours plein","value":1}
             ]}
-                ,{"o:id": 12,"o:title": "plein"}
+                ,{"o:id": 12,"o:title": "plein","value":10}
         ]};
         this.cont = d3.select("#"+params.idCont);
         this.fontSize = params.fontSize ? params.fontSize : 1;
         this.id = params.id ? params.id : 'ch0';
-        this.planExtent = params.planExtent ? params.planExtent : 16;
+        this.planExtent = params.planExtent ? params.planExtent : 1;
         this.eventCreate = params.eventCreate ? params.eventCreate : 'click';
-        var layoutBase, rectCarto = me.cont.node().getBoundingClientRect(), 
-        padding = 0, width = rectCarto.width, height = rectCarto.height,
-        svg, rectBase, container, hierarchie, defText="vide", allHexa, takenHexa=[];
+        var layoutBase, rectCarto, padding = 0, width, height, legende,
+        svg, rectBase, container, hierarchie, defText="vide", allHexa=[], takenHexa=[], color, defColor='black';
 
         this.init = function () {
 
-            //layout toujours flat pour garder un coté en relation avec le parent
-            layoutBase = new Layout(Layout.flat, new Point(100, 100), new Point(0, 0));
+            //initialisation
+            this.cont.selectAll('div').remove();
+            
+            //création du div pour la légende
+            let rectCont = this.cont.node().getBoundingClientRect() 
+            //création du div pour la carte
+            , divCarto = this.cont.append('div').attr('id','divCarto'+me.id)
+                .style('height',rectCont.height+'px').style('width','70%').style('float','left')
+            ; 
+            
+            legende = this.cont.append('div').attr('id','divLeg'+me.id)
+                .style('height',rectCont.height+'px').style('width','30%')
+                .style('background-color','white').style('float','left')
 
-            this.cont.select('svg').remove();
-            svg = this.cont.append('svg')
+            //création du svg pour la carto
+            rectCarto = divCarto.node().getBoundingClientRect(); 
+            width = parseInt(rectCarto.width);
+            height = parseInt(rectCarto.height);    
+            svg = divCarto.append('svg')
                 .attr('id','svgCartoHexa'+me.id)
                 .attr('width',width).attr('height',height),
             container = svg.append("g");
@@ -37,20 +51,129 @@ class cartoHexa {
                         container.attr('transform', event.transform);
                         })                        
             );
-            hierarchie = d3.hierarchy(me.data);
 
-            //initialise la cartographie suivant le nombre d'élément
-            initHexa(me.planExtent);
-            //ajoute les data
-            addTitle(hierarchie);
-            addChildren(hierarchie);
- 
+        //ajoute les data
+        if(me.urlData){
+            d3.json(url).then(function(data) {
+                me.data = data;
+                initData();
+            });            
+        }else initData();
     };
+    function initData() {
+        hierarchie = d3.hierarchy(me.data);
+
+        //définition des couleurs    
+        let valueExtent = d3.extent(me.data.children.map(d=>d.value));
+        color = d3.scaleSequential().domain(valueExtent).interpolator(d3.interpolateCool)
+
+        //layout toujours flat pour garder un coté en relation avec le parent
+        layoutBase = new Layout(Layout.flat, new Point(100, 100), new Point(0, 0));
+        //initialise la cartographie suivant le nombre d'élément
+        initHexa(me.planExtent);
+            
+
+        addTitle(hierarchie);
+        addChildren(hierarchie);
+        //création de la légende
+        createLegende();
+
+    }
+
 
     function ExceptionCartoHexa(message) {
         this.message = message;
         this.name = "ExceptionCartoHexa";
      }    
+
+     function createLegende() {
+
+        let pad = 10;
+        legende.append('h1').text('Légende').style('padding',pad+'px');
+
+        let margin = ({top: 20, right: 20, bottom: 30, left: 40})
+        , data = d3.sort(Array.from(d3.group(me.data.children, d => d.value)).map(d=>{ return {'nb': d[1].length,'value':d[0]};}), d => d.value)
+        , rect = legende.node().getBoundingClientRect()
+        , height=100 
+        , focusHeight=100 
+        , area = (x, y) => d3.area()
+            .x(d => x(d.value))
+            .y0(y(0))
+            .y1(d => y(d.nb))
+        , x = d3.scaleLinear()
+            .domain(d3.extent(data, d => d.value))
+            .range([margin.left, rect.width - margin.right])
+        , y = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.nb)])
+            .range([height - margin.bottom, margin.top])
+        , xAxis = (g, x, height) => g
+            .attr("transform", `translate(0,${height - margin.bottom})`)
+            .call(d3.axisBottom(x))
+        , yAxis = (g, y, title) => g
+            .attr("transform", `translate(${margin.left},0)`)
+            .call(d3.axisLeft(y).ticks(d3.min([6,y.domain()[1]])))
+            .call(g => g.selectAll(".title").data([title]).join("text")
+                .attr("class", "title")
+                .attr("x", -margin.left+pad)
+                .attr("y", 10)
+                .attr("fill", "currentColor")
+                .attr("text-anchor", "start")
+                .text(title));
+
+        const svg = legende.append("svg")
+            .attr("viewBox", [0, 0, rect.width, height])
+            .style("display", "block");
+        const brush = d3.brushX()
+            .extent([[margin.left, 0.5], [rect.width - margin.right, focusHeight - margin.bottom + 0.5]])
+            .on("brush", brushed)
+            .on("end", brushended);
+        const defaultSelection = [x.range()[0], x.range()[1]];
+
+        svg.append('defs').append("linearGradient")
+            .attr("id", "gradValue")
+            //.attr("gradientUnits", "userSpaceOnUse")
+            //.attr("x1", 0).attr("y1", 0)
+            //.attr("x2", 0).attr("y2", 1)
+        .selectAll("stop")
+            .data(data.map((d,i)=>{return {'offset':(i*100/data.length)+"%", 'color': color(d.value)}}))
+        .enter().append("stop")
+            .attr("offset", function(d) { return d.offset; })
+            .attr("stop-color", function(d) { return d.color; });
+
+        svg.append("g")
+            .call(xAxis, x, height);
+        svg.append("g")
+            .call(yAxis, y, 'nb');
+        
+        svg.append("path")
+            .datum(data)
+            .attr("fill", "url(#gradValue)")
+            .attr("d", area(x, y));
+        
+        const gb = svg.append("g")
+            .call(brush)
+            .call(brush.move, defaultSelection);
+        
+        function brushed({selection}) {
+            if (selection) {
+                let s = selection.map(x.invert, x);
+                container.selectAll('.gHexa').attr('visibility',h=>{
+                    return h.data.value >= s[0] && h.data.value <= s[1] ? 'visible' : 'hidden'
+                });
+            }
+        }
+        
+        function brushended({selection}) {
+            if (!selection) {
+                gb.call(brush.move, defaultSelection);
+            }else{
+                let s = selection.map(x.invert, x);
+            }
+        }
+          
+
+
+    }
 
     function hexCenter(hex, layout) {        
         let p = layout.hexToPixel(hex),
@@ -72,7 +195,11 @@ class cartoHexa {
     }
     //création de la grille vide
     function initHexa(nbShape){
-        allHexa = makeHexagonalShape(nbShape);
+        while (allHexa.length < hierarchie.children.length) {
+            allHexa = makeHexagonalShape(nbShape);
+            nbShape ++;
+        }
+        me.planExtent = nbShape;
         let polygonVerticesFlat = layoutBase
             .polygonCorners(new Hex(0,0,0))
             .map(p=>`${p.x},${p.y}`)
@@ -95,7 +222,7 @@ class cartoHexa {
             .attr('transform',h=>hexCenter(h,layoutBase).transform)
             .on(me.eventCreate,addHexa),
         polys = svgHexa.append('polygon').attr('points',polygonVerticesFlat)
-                .attr('fill','#86abcb42').attr('stroke','black')
+                .attr('fill',defColor).attr('stroke','black')
                 ;            
         return svgHexa;
     }
@@ -146,8 +273,8 @@ class cartoHexa {
                     }
                     return true
                 })
-                i++;
                 if(i > me.planExtent)throw new ExceptionCartoHexa("Plus de place disponible dans la carte");
+                i++;
             }
             //création de l'hexa
             addHexa(null,c);
@@ -172,7 +299,9 @@ class cartoHexa {
             .join(" "),            
         s = svg.select('#'+hp.id), //n = s.node(), bb = n.getBBox(),
         gHexa = s.selectAll('g').data(hexas).enter().append('g')
+            .attr('class','gHexa')
             .attr('id',(h,i)=>{
+                h.data = hp.data;
                 h.subShapeDetail = hp.subShapeDetail;
                 h.laysize = layout.size;
                 h.depth = e ? hp.depth+1 : hp.depth;//gestion ajout manuel ou data
@@ -183,7 +312,13 @@ class cartoHexa {
             return hexCenter(h, layout).transform
         }),
         polys = gHexa.append('polygon').attr('points',polygonVerticesFlat)
-                .attr('fill','#86abcb42').attr('stroke','black').attr('stroke-width',h=>1/h.depth/10)
+                .attr('fill',h=>{
+                    let c = color(hp.data ? hp.data.value : 1);
+                    if(h.q == 0 && h.r == 0 && h.r == 0) h.color = d3.color(c).copy({opacity: 0.8});
+                    else h.color = d3.color(c).copy({opacity: 0.5});
+                    return h.color
+                })
+                .attr('stroke','black').attr('stroke-width',h=>1/h.depth/10)
                 .on('click',clickHex);
         //le centre est réserver à la description de l'espace
         /*        ,
