@@ -26,7 +26,12 @@
 </body>
 <script>
     //récupère les data
-    let url = 'http://localhost/samszo/omk/s/cartoaffect/page/ajax?json=1&helper=CartoHexa&action=getAllConcept&minVal=100&maxVal=2000';
-    let carte = new cartoHexa({'idCont':'ec','urlData':url});
+    let urlData = 'http://localhost/luckysemiosis/s/cartoaffect/page/ajax?json=1&helper=CartoHexa&action=getAllConcept&minVal=100&maxVal=200',
+    urlDetails = "http://localhost/luckysemiosis/s/cartoaffect/page/ajax?json=1&helper=ResourceNetworks&id=",
+    urlCooccurrence = "http://localhost/luckysemiosis/s/cartoaffect/page/ajax?json=1&helper=SQL&action=cooccurrenceValueResource&id=",
+    urlItems = "http://localhost/luckysemiosis/s/cartoaffect/page/ajax?json=1&helper=items",
+    carte = new cartoHexa({'idCont':'ec'
+        ,'urlData':urlData,'urlDetails':urlDetails,'urlCooccurrence':urlCooccurrence,'urlItems':urlItems
+    });
 
 </script>
