@@ -7,7 +7,7 @@ class cartoHexa {
         this.urlDetails = params.urlDetails ? params.urlDetails : false;
         this.urlCooccurrence = params.urlCooccurrence ? params.urlCooccurrence : false;
         this.urlItems = params.urlItems ? params.urlItems : false;
-        
+        this.urlItemDetails = params.urlItemDetails ? params.urlItemDetails : false;        
         //this.urlPatience = params.urlPatience ? params.urlPatience : 'https://samszo.github.io/A_Maze_Logo/patience.html';
         this.urlPatience = params.urlPatience ? params.urlPatience : 'http://localhost/A_Maze_Logo/patience.html';        
         this.data = params.data ? params.data : {
@@ -125,15 +125,23 @@ class cartoHexa {
         createBrushVal();
 
         //ajoute la liste des docs
-        legende.append('h2').text("Liste des ressources").style('padding',pad+'px')
-            .append('div').attr('id',me.id+'ListeResource');
+        let lr = legende.append('div').attr('id',me.id+'ListeResource').style('padding',pad+'px');
+        lr.append('h2').text("Liste des ressources");
         
     }
 
-    function showListeDoc(){
+    function showListeDoc(d){
         let lr = d3.select('#'+me.id+'ListeResource');
-        lr.selectAll('div').remove();
-        lr.selectAll('div').data(data).enter().append('div').text(d=>d['o:title'])
+        lr.selectAll('h3').remove();
+        lr.append('h3').html('Cooccurences entre <i>'+d.hexa.data["o:title"]+'</i> et <i>'+d.hexaTarget.data["o:title"]+'</i>');
+        lr.selectAll('ul').remove();
+        let lis = lr.append('ul').selectAll('li').data(d.items).enter().append('li').text(d=>d['o:title'])
+        if(me.urlItemDetails){
+            lis.append('a')
+                .style('margin-left','3px')
+                .attr('target','_blank')
+                .attr('href',l=>me.urlItemDetails+l['o:id']).text('->')
+        }
     }
 
     function createBrushVal(){
@@ -573,12 +581,16 @@ class cartoHexa {
         container.attr('transform', contTrans);        
     }
     function showDetailsCooccurrences(e,d){
-        //récupère la liste des ressources
-        if(me.urlItems){
-            d3.json(me.urlItems+'&ids[]='+d.resources.join('&ids[]=')).then(function(data) {
-                d.items = data;
-                console.log(data);
-            });                    
+        if(d.items){
+            showListeDoc(d);
+        }else{
+            //récupère la liste des ressources
+            if(me.urlItems){
+                d3.json(me.urlItems+'&ids[]='+d.resources.join('&ids[]=')).then(function(data) {
+                    d.items = data;
+                    showListeDoc(d);
+                });                    
+            }
         }
     }
     function getHexaFromId(id){
@@ -594,7 +606,7 @@ class cartoHexa {
             } 
         }else{
             //throw new ExceptionCartoHexa("L'hexagone n'existe pas dans la carte");
-            console.log("L'hexagone n'existe pas dans la carte : "+id);
+            //console.log("L'hexagone n'existe pas dans la carte : "+id);
             return false;
         } 
 
