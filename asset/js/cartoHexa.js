@@ -27,7 +27,9 @@ class cartoHexa {
         this.eventDetailsCooccurrence = params.eventDetailsCooccurrence ? params.eventDetailsCooccurrence : 'click';
         var layoutBase, rectCarto, padding = 0, width, height, legende,
         svg, rectBase, container, hierarchie, defText="vide", allHexa=[], takenHexa=[], color, defColor='black'
-        , patience, defValSelect, valueExtent;
+        , patience, defValSelect, valueExtent, resourceClass=false
+        , onDrag=false, onZoom=false, onAdd=false, onRedim = false
+        , subShapeDetail=2;
 
         this.init = function () {
 
@@ -90,6 +92,7 @@ class cartoHexa {
     }
     function initData() {
         hierarchie = d3.hierarchy(me.data);
+        resourceClass = hierarchie.data['o:resource_class'];
 
         //définition des intervales
         valueExtent = d3.extent(me.data.children.map(d=>d.value));
@@ -99,15 +102,13 @@ class cartoHexa {
 
         //layout toujours flat pour garder un coté en relation avec le parent
         layoutBase = new Layout(Layout.flat, new Point(100, 100), new Point(0, 0));
-        //initialise la cartographie suivant le nombre d'élément
-        initHexa(me.planExtent);
-            
 
+        //initialise la cartographie suivant le nombre d'élément
+        initHexa(me.planExtent);           
         addTitle(hierarchie);
+
         //création de la légende
         createLegende();
-        //création de la hiérachie des hexas
-        //addChildren(hierarchie);ce lance à la création de la légende
 
     }
 
@@ -233,7 +234,7 @@ class cartoHexa {
         function brushed({selection}) {
             if (selection) {
                 let s = selection.map(x.invert, x);
-                container.selectAll('.gHexa').attr('visibility',h=>{
+                container.selectAll('.gInitPlanOccupe').attr('visibility',h=>{
                     if(!h.data)return 'visible';
                     return h.data.value >= s[0] && h.data.value <= s[1] ? 'visible' : 'hidden'
                 });
@@ -277,74 +278,112 @@ class cartoHexa {
         return [left, top, width, height];
     }
     //création de la grille vide
-    function initHexa(nbShape){
+    function initHexa(nbShape, update){
+        let contTrans = container.attr('transform');
+        container.attr('transform','');
+
         while (allHexa.length < hierarchie.children.length) {
             allHexa = makeHexagonalShape(nbShape);
             nbShape ++;
         }
+        //ajoute un shape pour l'extension
+        allHexa = makeHexagonalShape(nbShape);
+        nbShape ++;
         me.planExtent = nbShape;
         let polygonVerticesFlat = layoutBase
             .polygonCorners(new Hex(0,0,0))
             .map(p=>`${p.x},${p.y}`)
             .join(" "),            
         vb = getViewBox(allHexa),
-        scale = 1,
-        svgHexa = container.append('svg')
-            .attr('id','svgPlan0')
-            .attr('width',vb[2]*scale).attr('height',vb[3]*scale)
-            .attr('x',vb[0]*scale+width/2).attr('y',vb[1]*scale+height/2)
-            .attr('viewBox',vb.join(' '))
-            .selectAll('g').data(allHexa).enter().append('g')
-            .attr('id',(h,i)=>{
-                h.layout = layoutBase;
-                h.subShapeDetail = 1;
-                h.depth = 0;
-                h.id = me.id+'gPlan'+h.depth+'_'+h.q+'_'+h.r+'_'+h.s;
-                return h.id;
-            })
-            .attr('transform',h=>hexCenter(h,layoutBase).transform)
-            .on(me.eventCreate,addHexa),
-        polys = svgHexa.append('polygon').attr('points',polygonVerticesFlat)
-                .attr('fill',defColor).attr('stroke','black')
-                ;
-        //ajouter les markers pour les rapports
-        let markerBoxWidth = 20
-            , markerBoxHeight = 20
-            , refX = markerBoxWidth/2
-            , refY = markerBoxHeight/2
-            , arrowPoints = [[0, 0], [0, 20], [20, 10]]
-            , defs = svgHexa.append('defs');
-        defs.append('marker')
-            .attr('id', 'arrow')
-            .attr('viewBox', [0, 0, markerBoxWidth, markerBoxHeight])
-            .attr('refX', refX)
-            .attr('refY', refY)
-            .attr('markerWidth', markerBoxWidth)
-            .attr('markerHeight', markerBoxHeight)
-            .attr('orient', 'auto-start-reverse')
-            .append('path')
-            .attr('d', d3.line()(arrowPoints))
-            .attr('fill', '#ffffff32');        
-        defs.append('marker')
-            .attr('id', 'point')
-            .attr('viewBox', [0, 0, markerBoxWidth, markerBoxHeight])
-            .attr('refX', refX)
-            .attr('refY', refY)
-            .attr('markerWidth', markerBoxWidth)
-            .attr('markerHeight', markerBoxHeight)
-            .attr('orient', 'auto')
-            .append('circle')
-            .attr('r', refX/2).attr('cx', refX).attr('cy', refY)
-            .attr('fill', '#ffffff32');        
-        
+        scale = 1, svgHexa;
+        if(update){
+            svgHexa = container.select('#'+me.id+'svgPlan0');
+            //traite uniquement les hexa sans data
+            allHexa = allHexa.filter(h=>{
+                if(h.q == 0 && h.s == 0 && h.r == 0)return false; 
+                if(takenHexa[me.id+'gPlan0_'+h.q+'_'+h.r+'_'+h.s])return false;
+                return true;
+            })    
+        }else{
+            svgHexa = container.append('svg')
+                .attr('id',me.id+'svgPlan0');
+                //.attr('width',vb[2]*scale).attr('height',vb[3]*scale)
+                //.attr('x',vb[0]*scale+width/2).attr('y',vb[1]*scale+height/2)
+            //ajouter les markers pour les rapports
+            let markerBoxWidth = 20
+                , markerBoxHeight = 20
+                , refX = markerBoxWidth/2
+                , refY = markerBoxHeight/2
+                , arrowPoints = [[0, 0], [0, 20], [20, 10]]
+                , defs = svgHexa.append('defs');
+            defs.append('marker')
+                .attr('id', 'arrow')
+                .attr('viewBox', [0, 0, markerBoxWidth, markerBoxHeight])
+                .attr('refX', refX)
+                .attr('refY', refY)
+                .attr('markerWidth', markerBoxWidth)
+                .attr('markerHeight', markerBoxHeight)
+                .attr('orient', 'auto-start-reverse')
+                .append('path')
+                .attr('d', d3.line()(arrowPoints))
+                .attr('fill', '#ffffff32');        
+            defs.append('marker')
+                .attr('id', 'point')
+                .attr('viewBox', [0, 0, markerBoxWidth, markerBoxHeight])
+                .attr('refX', refX)
+                .attr('refY', refY)
+                .attr('markerWidth', markerBoxWidth)
+                .attr('markerHeight', markerBoxHeight)
+                .attr('orient', 'auto')
+                .append('circle')
+                .attr('r', refX/2).attr('cx', refX).attr('cy', refY)
+                .attr('fill', '#ffffff32');        
+        }
+        svgHexa.attr('viewBox',vb.join(' '));
+        let gHexa = svgHexa.selectAll('.gInitPlan').data(allHexa)
+        .join(
+            enter => enter.append('g')
+                .attr('class','gInitPlan')
+                .attr('id',(h,i)=>{
+                    h.layout = layoutBase;
+                    h.subShapeDetail = subShapeDetail;
+                    h.depth = 0;
+                    h.id = me.id+'gPlan'+h.depth+'_'+h.q+'_'+h.r+'_'+h.s;
+                    return h.id;
+                })
+                .attr('transform',h=>hexCenter(h,layoutBase).transform)
+                .on(me.eventCreate,addHexa)
+                .append('polygon').attr('points',polygonVerticesFlat)
+                .attr('fill',defColor).attr('stroke','#a8acaf')                
+            ,
+            update => update
+                .attr('id',(h,i)=>{
+                    h.layout = layoutBase;
+                    h.subShapeDetail = 2;
+                    h.depth = 0;
+                    h.id = me.id+'gPlan'+h.depth+'_'+h.q+'_'+h.r+'_'+h.s;
+                    return h.id;
+                })
+                .attr('transform',h=>hexCenter(h,layoutBase).transform)
+            /*    ,
+            exit => exit
+                .remove()
+            */
+          );
+        //place en front les hexas occupés
+        d3.selectAll('.formeSpe').raise();
+        d3.selectAll('.gHexa').raise();         
+        container.attr('transform',contTrans);
+                
         return svgHexa;
     }
     //ajoute le titre de la carte
     function addTitle(d){
 
-        let gCenter = svg.select('#'+me.id+'gPlan0_0_0_0').append('g')
+        let gCenter = svg.select('#'+me.id+'gPlan0_0_0_0')
+        .attr('class','gInitPlanOccupe').append('g')
             .attr('id',me.id+'gTitre')
-        .attr('transform',hexCenter(new Hex(0,0,0), layoutBase).transform);
+            .attr('transform',hexCenter(new Hex(0,0,0), layoutBase).transform);
         gCenter.append("text")
             .attr('id',h=>{
                 h.title = d.data['o:title'] ? d.data['o:title'] : defText; 
@@ -374,9 +413,9 @@ class cartoHexa {
         })
     }
 
-    function addChild(d, c){
+    function addChild(d, c, move){
         //vérifie si la donnée a une place
-        let i = 1;
+        let i = 1, idO = c.id;
         while (c.q == undefined) {
             //récupère la première place disponible du centre vers l'extérieur
             hexRing(i).every(h=>{       
@@ -386,30 +425,42 @@ class cartoHexa {
                     c.q = h.q;
                     c.r = h.r;
                     c.s = h.s;
+                    c.depth = c.depth ? c.depth : d.depth+1;
                     c.title=c.data['o:title'];
                     c.id= id;
                     c.layout = d.layout;
-                    c.subShapeDetail = 1;
+                    c.subShapeDetail = subShapeDetail;
                     return false;
                 }
                 return true
             })
-            if(i > me.planExtent)throw new ExceptionCartoHexa("Plus de place disponible dans la carte");
+            if(i > me.planExtent)throw new ExceptionCartoHexa("Plus de place disponible dans la carte");//TODO extension automatique
             i++;
         }
-        //création de l'hexa
-        addHexa(null,c);
+        //vérifie si on place le concept à l'intérieur
+        if(move){
+            c.depth++;
+            //création de l'hexa
+            addHexa(null,c);
+            d3.select('#'+idO).remove();            
+            d3.select('#'+c.id).raise();
+            takenHexa[idO]=false;
+        }else{
+            //création de l'hexa
+            addHexa(null,c);
+        }
         //création des enfants
         let layout = new Layout(Layout.flat, new Point(c.layout.size.x/(c.subShapeDetail*2+1), c.layout.size.y/(c.subShapeDetail*2+1)), new Point(0, 0));
         c.layout = layout; 
         addChildren(c,[0,me.data.children.length]);
+
         return c;
         
     }
 
     //ajoute un hexagone
     function addHexa(e,hp){
-        if(hp.q == 0 && hp.r == 0 && hp.r == 0)return;
+        if(hp.q == 0 && hp.s == 0 && hp.r == 0)return;
         if(takenHexa[hp.id])return;
 
         let hexas = makeHexagonalShape(hp.subShapeDetail),
@@ -418,44 +469,65 @@ class cartoHexa {
             .polygonCorners(new Hex(0,0,0))
             .map(p=>`${p.x},${p.y}`)
             .join(" "),            
-        s = svg.select('#'+hp.id), //n = s.node(), bb = n.getBBox(),
-        gHexa = s.selectAll('g').data(hexas).enter().append('g')
-            .attr('class','gHexa')
+        s = svg.select('#'+hp.id),
+        sClass = s.attr('class'),
+        //ajoute la forme spécifique
+        formeSpe = addFormeSpe(e, s,hp),    
+        //ajoute la grille hexagonale
+        gHexa = s.selectAll('.gHexa').data(hexas).enter().append('g')
+            .attr('class',h=>{
+                h.depth = e ? hp.depth+1 : hp.depth;//gestion ajout manuel ou data
+                return 'gHexa depth'+h.depth
+            })
             .attr('id',(h,i)=>{
                 h.data = hp.data;
+                h.center = hexCenter(h, layout);
                 h.subShapeDetail = hp.subShapeDetail;
                 h.layout =layout;                
-                h.depth = e ? hp.depth+1 : hp.depth;//gestion ajout manuel ou data
                 h.id = hp.id+'gPlan'+h.depth+'_'+h.q+'_'+h.r+'_'+h.s;    
                 return h.id;
             })
             .attr('transform',h=>{
-                return hexCenter(h, layout).transform
+                return h.center.transform
             })
-            .on(me.eventDetails ,getDetails)
             .on("mouseenter", zoomHexa)
             .on("mouseleave", dezoomHexa)
             ,
         polys = gHexa.append('polygon').attr('points',polygonVerticesFlat)
-                .attr('fill',h=>{
-                    let c = color(hp.data ? hp.data.value : 1);
-                    if(h.q == 0 && h.r == 0 && h.r == 0) h.color = d3.color(c).copy({opacity: 0.8});
-                    else h.color = d3.color(c).copy({opacity: 0.5});
-                    return h.color
-                })
-                .attr('stroke','black').attr('stroke-width',h=>1/h.depth/10)
-                .style('cursor', h=>h.q == 0 && h.r == 0 && h.r == 0 ? 'pointer' : 'zoom-in')
-                .on('click',clickHex);
+            .attr('fill',h=>{
+                let c = h.data ? color(h.data.value) : 'white';
+                if(h.q == 0 && h.s == 0 && h.r == 0) h.color = d3.color(c).copy({opacity: resourceClass ? 0.01 : 0.8});
+                else h.color = d3.color(c).copy({opacity: resourceClass ? 0.01 : 0.5});
+                return h.color
+            })
+            .attr('stroke',resourceClass ? 'white' : 'black')
+            .attr('stroke-width',h=>1/h.depth/10)
+            .style('cursor', h=>getCursor(h))
+            .on("mouseenter", function(){onAdd=true;})
+            .on("mouseleave", function(){onAdd=false;})
+            .on('click',clickHexa);
+        polys.call(d3.drag()
+            .on("start", redimHexaStart)
+            .on("drag", redimHexa)
+            .on("end", redimHexaEnd)
+            //.filter(event => !onZoom && !onAdd)
+            );
+        //ajoute le drag & drop sur l'hexa
+        s.attr('class',sClass=='gInitPlan' ? 'gInitPlanOccupe' : sClass+' gInitPlanOccupe')
+            .style('cursor', 'grab')
+            .data(hp).call(d3.drag()
+            .on("start", dragHexaStart)
+            .on("drag", dragHexa)
+            .on("end", dragHexaEnd)
+            .filter(event => !onZoom && !onAdd && !onRedim)
+            //.on("start.update drag.update end.update", dragHexaUpdate)
+        );                        
+
         //le centre est réserver à la description de l'espace
-        /*        ,
-        center = gHexa.append('circle').attr('x',0).attr('y',0).attr('r',10)
-                .attr('fill','green').attr('stroke','black')
-                .on('mouseover',addHexa);
-        */        
         //ajoute les titres
         gHexa.append("text")
             .attr('id',h=>{
-                if(h.q == 0 && h.r == 0 && h.r == 0)
+                if(h.q == 0 && h.s == 0 && h.r == 0)
                     h.title = hp.title ? hp.title : defText; 
                 else h.title = "";
                 return 'chText_'+h.id
@@ -471,11 +543,142 @@ class cartoHexa {
             .attr('alignment-baseline',"middle")
             .text(h=>h.title)
             .attr("font-size", adaptLabelFontSize)
+            .style('cursor', 'help')
+            .on(me.eventDetails ,getDetails)
             ;
-        
+
         takenHexa[hp.id]=gHexa;
 
     }
+    function getCursor(h){
+        let d = h.distance({q:0,s:0,r:0});
+        switch (d) {
+            case 0://au centre
+                return 'pointer';
+                break;
+            case 1://à l'intérieur
+                return 'zoom-in';
+                break;        
+            case 2://au bord
+                if(h.q==0 && h.s==2 && h.r==-2)return 'n-resize';
+                if(h.q==2 && h.s==-1 && h.r==-1)return 'e-resize';
+                if(h.q==0 && h.s==-2 && h.r==2)return 's-resize';
+                if(h.q==-2 && h.s==1 && h.r==1)return 'w-resize';
+                if(h.q==1 && h.s==1 && h.r==-2)return 'ne-resize';
+                if(h.q==2 && h.s==0 && h.r==-2)return 'ne-resize';
+                if(h.q==-1 && h.s==2 && h.r==-1)return 'nw-resize';
+                if(h.q==-2 && h.s==2 && h.r==0)return 'nw-resize';
+                if(h.q==2 && h.s==-2 && h.r==0)return 'se-resize';
+                if(h.q==1 && h.s==-2 && h.r==1)return 'se-resize';
+                if(h.q==-1 && h.s==-1 && h.r==2)return 'sw-resize';
+                if(h.q==-2 && h.s==0 && h.r==2)return 'sw-resize';
+                break;
+        }
+    }
+    function addFormeSpe(e, s,hp){
+        switch (resourceClass) {
+            case "jdc:Concept":
+                return addConcept(e, s,hp);                
+                break;        
+            default:
+                return false;
+        }
+    }
+    function addConcept(e, s,hp){
+        let forme = s.selectAll('circle').data([hp]).enter().append('g')
+            .attr('class',h=>'formeSpe depth'+ (e ?  h.depth+1 : h.depth))
+        ;
+        //ajoute le cercle inscrit
+        forme.append('circle')
+            .attr('fill',h=>{
+                let c = h.data ? color(h.data.value) : 'white';
+                h.color = d3.color(c).copy({opacity: 0.8});
+                return h.color
+            })
+            .attr('cx',0)
+            .attr('cy',0)
+            .attr('r',h=>h.layout.size.x*Math.sqrt(3)/2)//rayon du cercle inscrit
+            .attr('stroke','black').attr('stroke-width',h=>1/h.depth/10);       
+        //ajoute le cercle du bord pour redimensionner
+        forme.append('circle')
+            .attr('fill',h=>{
+                let c = h.data ? color(h.data.value) : 'white';
+                h.color = d3.color(c).copy({opacity: 0.8});
+                return h.color
+            })
+            .attr('cx',0)
+            .attr('cy',0)
+            //rayon du cercle circonscrit de 2 hexa
+            .attr('r',h=>((h.layout.size.x/(h.subShapeDetail*2+1))*Math.sqrt(3)/2)*3)
+            .attr('stroke','black').attr('stroke-width',h=>1/h.depth/10)
+            .style('pointer','nwse-resize');       
+        
+        return forme;
+    }
+    function dragHexa(e,h){
+        d3.select(this).raise().attr("transform",'translate('+(e.x)+','+(e.y)+')')
+    }
+    function dragHexaStart(e,h){        
+        onDrag=true;
+        hideCooccurrences(h);
+        d3.select(this).attr('stroke','white').attr('stroke-width',h=>1/h.depth);
+    }
+    function dragHexaEnd(e,h){
+        let nh = h.parent.layout.pixelToHex(e);
+        nh.q = Math.round(nh.q); 
+        nh.r = Math.round(nh.r); 
+        nh.s = Math.round(nh.s);
+        let sum = nh.q+nh.r+nh.s;
+        if(nh.q+nh.r+nh.s!=0)nh.s = -nh.q - nh.r;
+        //vérifie si l'hexa est occupé
+        let existHexa = d3.select('#'+me.id+'gPlan'+(h.depth-1)+'_'+nh.q+'_'+nh.r+'_'+nh.s);
+        //vérifie s'il faut ajouter l'hexa dans un autre hexa
+        if(existHexa.size() && existHexa.datum() && existHexa.datum().data){
+            //un parent ne pas pas être enfant
+            if(existHexa.datum().data['o:id']==h.data['o:id']){
+                let center = hexCenter(nh, h.parent.layout);
+                d3.select(this)
+                    .attr("transform",'translate('+(center.x)+','+(center.y)+')')
+                    .attr('stroke','black').attr('stroke-width',h=>1/h.depth/10);
+            }else{
+                h.q=null
+                addChild(existHexa.datum(),h,true);    
+            }
+        }else{
+            let center = hexCenter(nh, h.parent.layout);
+            d3.select(this)
+                .attr("transform",'translate('+(center.x)+','+(center.y)+')')
+                .attr('stroke','black').attr('stroke-width',h=>1/h.depth/10);
+            //création d'un pavage supplémentaire
+            if(!existHexa.size()){
+                //ajoute les hexas supplémentaires pour la grille
+                let dst = nh.distance({q:0,r:0,s:0});
+                initHexa(dst,true);
+            }
+        }
+        showCooccurrences(h);    
+        onDrag=false;
+    }
+    function dragHexaUpdate(e,h){
+        console.log(h);
+    }
+
+    function redimHexa(e,h){
+        console.log(h);
+    }
+    function redimHexaStart(e,h){        
+        onRedim=true;
+        console.log(h);
+    }
+    function redimHexaEnd(e,h){
+        console.log(h);
+        onRedim=false;
+    }
+    function redimHexaUpdate(e,h){
+        console.log(h);
+    }
+
+
     function adaptLabelFontSize(d) {
         /*
             * The meaning of the ratio between labelAvailableWidth and labelWidth equaling 1 is that
@@ -489,14 +692,23 @@ class cartoHexa {
         return (d.layout.size.x / this.getComputedTextLength()) + 'em';
     } 
 
-    function zoomHexa(e,d){        
-        if(d.q == 0 && d.r == 0 && d.r == 0 && d.layout){
-            d3.select(this.parentNode).raise();
+    function zoomHexa(e,d){ 
+        if(!onDrag && d.q == 0 && d.r == 0 && d.r == 0 && d.layout){
+            onZoom = true;
+            let pn = d3.select(this.parentNode)
+            pn.raise();
+            pn.select('.formeSpe.depth'+d.depth).raise().attr('transform','scale(5)');
+            pn.selectAll('.gHexa.depth'+d.depth).raise();
             d3.select(this).raise().attr('transform','scale(10)');
         }
     }
     function dezoomHexa(e,d){
-        if(d.q == 0 && d.r == 0 && d.r == 0 && d.layout)d3.select(this).attr('transform',hexCenter(d, d.layout).transform);
+        if(d.q == 0 && d.r == 0 && d.r == 0 && d.layout){
+            d3.select(this.parentNode).select('.formeSpe.depth'+d.depth).attr('transform','');
+            d3.select(this).attr('transform',hexCenter(d, d.layout).transform);
+            d3.select(this).selectAll('g').raise();
+            onZoom = false;
+        }
     }
 
     function getDetails(e,d){
@@ -528,17 +740,18 @@ class cartoHexa {
 
     }
     function showDetails(d){
-        d3.select('#'+d.id).select('polygon').attr('stroke','white').attr('stroke-width', d.depth)
+        //d3.select('#'+d.id).select('polygon').attr('stroke','white').attr('stroke-width', d.depth)
         d.showDetails = true;
     }
     function hideDetails(d){
-        d3.select('#'+d.id).attr('stroke','black').attr('stroke-width', 1/d.depth/10)
+        //d3.select('#'+d.id).attr('stroke','black').attr('stroke-width', 1/d.depth/10)
         d.showDetails = false;
     }
     function hideCooccurrences(d){
         container.selectAll('.cooccurrences'+d.data["o:id"]).remove();
     }
     function showCooccurrences(d){      
+        if(!d.cooccurrences)return;
         //gestion du zoom
         let contTrans = container.attr('transform');
         container.attr('transform','');
@@ -614,9 +827,10 @@ class cartoHexa {
     function updateHexa(e,d){
         console.log(d);
     }
-    function clickHex(e,h){
-        if(h.q == 0 && h.r == 0 && h.r == 0) updateHexa(e,h);
-        else addHexa(e,h);
+    function clickHexa(e,h){
+        let d = h.distance({q:0,s:0,r:0});
+        if(h.q == 0 && h.s == 0 && h.r == 0) updateHexa(e,h);
+        else if(d==1)addHexa(e,h);
     }
 
     
