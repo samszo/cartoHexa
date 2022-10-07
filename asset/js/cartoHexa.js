@@ -956,10 +956,17 @@ class cartoHexa {
         //calcule les beziers du nouvelle hexa
         svgBezierCircle(hT);
 
+        //calcule les portions du bord
+        let bp={
+            'se':svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, -hS.rBord),
+            'sw':svgBezierOvalQuarter(hS.centerX, hS.centerY, hS.rBord, -hS.rBord),
+            'ne':svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, hS.rBord),
+            'nw':svgBezierOvalQuarter(hS.centerX, hS.centerY, hS.rBord, hS.rBord)
+        };
 
-        //ATTENTION l'odre d'insertion n'est pas important
-        //traite les points beziers des hexas source et target
-        //suivant la direction du cursor
+
+        //ATTENTION l'odre d'insertion est important
+        //traite les points suivant la direction du cursor
         switch (angleDir) {
             case 'n-resize':
                 //on ajoute les points dans le sens horaire en partant du sud
@@ -1075,33 +1082,38 @@ class cartoHexa {
                 break;
             case 'nw-resize':
                 //on ajoute les points dans le sens horaire en partant du sud-est
-                se = svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, -hS.rBord);
-                sw = svgBezierOvalQuarter(hS.centerX, hS.centerY, hS.rBord, -hS.rBord);
                 nBezier.set('se0',[
-                    [sw[0][0]+cT.x,se[3][1]],
-                    [sw[0][0]+cT.x,se[3][1]],
-                    se[3],                        
-                    se[3]                        
+                    //connecteur swT - seS
+                    [bp.sw[0][0]+cT.x,bp.se[3][1]],
+                    [bp.sw[0][0]+cT.x,bp.se[3][1]],
+                    bp.se[3],                        
+                    bp.se[3]                        
                 ]);
-                nBezier.set('se'+hT.hexNumLigne,[
-                    [sw[3][0]+cT.x,cT.y+sw[3][1]],
-                    [sw[2][0]+cT.x,cT.y+sw[2][1]],
-                    [sw[1][0]+cT.x,cT.y+sw[1][1]],
-                    [sw[0][0]+cT.x,cT.y+sw[0][1]],
-                ]);
-                /*
                 nBezier.set('sw0',hS.pointsBezier.get('sw0'));
                 nBezier.set('nw0',hS.pointsBezier.get('nw0'));
                 nl = hT.hexNumLigne-1;
                 while(hS.pointsBezier.has('ne'+nl)){
                     if(nl==0){
-                        nBezier.set('ne0',svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, hS.rBord));
+                        nBezier.set('ne0',bp.ne);        
                     }else
                         nBezier.set('ne'+nl, hS.pointsBezier.get('ne'+nl));
-                    nBezier.set('se'+nl, hS.pointsBezier.get('se'+nl));    
                     nl--;
                 }
-                */
+                nBezier.set('nw'+hT.hexNumLigne,[
+                    //connecteur neS - nwT
+                    [bp.ne[0][0],cT.y+bp.nw[3][1]],
+                    [bp.ne[0][0],cT.y+bp.nw[3][1]],
+                    [bp.nw[3][0]+cT.x,cT.y+bp.nw[3][1]],
+                    [bp.nw[3][0]+cT.x,cT.y+bp.nw[3][1]],
+                ]);    
+                ['ne', 'se', 'sw'].forEach(dir=>{
+                    nBezier.set(dir+hT.hexNumLigne,[
+                    [bp[dir][3][0]+cT.x,cT.y+bp[dir][3][1]],
+                    [bp[dir][2][0]+cT.x,cT.y+bp[dir][2][1]],
+                    [bp[dir][1][0]+cT.x,cT.y+bp[dir][1][1]],
+                    [bp[dir][0][0]+cT.x,cT.y+bp[dir][0][1]],
+                    ])
+                });
                 break;
             case 'se-resize':
                 h.pointsBezier['se'][1][0]=x;
