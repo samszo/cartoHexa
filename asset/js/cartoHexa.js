@@ -649,14 +649,6 @@ class cartoHexa {
                 })
                 .attr('d',h=>{
                     if(h.pointsBezier)return svgBezierOvalRedim(h);
-                    //rayon du cercle circonscrit de 2 hexa
-                    //let r = ((h.layout.size.x/(h.subShapeDetail*2+1))*Math.sqrt(3)/2)*4;
-                    //rayon du cercle inscrit
-                    //moins la largeur du stroke / 2 cf. https://alexwlchan.net/2021/03/inner-outer-strokes-svg/
-                    h.wBord = h.layoutOut.size.x/(h.subShapeDetail*2+1);
-                    h.rBord = h.rInscrit-h.wBord/2
-                    h.centerX = 0;
-                    h.centerY = 0;
                     h.espace = d3.select(d3.select('#'+h.id).node().closest(".gEspace"))
                     return svgBezierCircle(h);
                 })
@@ -916,15 +908,6 @@ class cartoHexa {
                     d3.select(e.currentTarget).style('cursor',h.cursor);
                 })
                 .attr('d',h=>{
-                    //rayon du cercle circonscrit de 2 hexa
-                    //let r = ((h.layout.size.x/(h.subShapeDetail*2+1))*Math.sqrt(3)/2)*4;
-                    //rayon du cercle inscrit
-                    //moins la largeur du stroke / 2 cf. https://alexwlchan.net/2021/03/inner-outer-strokes-svg/
-                    h.wBord = h.layout.size.x/(h.subShapeDetail*2+1);
-                    h.rBord = h.rInscrit-h.wBord/2
-                    h.centerX = 0;
-                    h.centerY = 0;
-                    h.espace = s;
                     return svgBezierCircle(h);
                 })
                 .attr('stroke-linecap',"round")
@@ -961,20 +944,22 @@ class cartoHexa {
             p.bezierCurveTo(...points[1],...points[2],...points[3]);
         */      
         //récupère les points des hexa
-        let pHexa = hS.layoutOut.polygonCorners(hS.hex),
+        let pHexaS = hS.layoutOut.polygonCorners(hS.hex),
+        pHexaT = hT.layoutOut.polygonCorners(hT.hex),
         //calcule l'angle entre les deux hexa
-        angleDir = getAngleCursor(Math.atan2(hT.center.y - hS.center.y, hT.center.x - hS.center.x)*180/Math.PI),
+        angleDir = hS.cursor,//getAngleCursor(Math.atan2(hT.center.y - hS.center.y, hT.center.x - hS.center.x)*180/Math.PI),
         //calcule les centres
         cS = hS.center,        
         cT = {x:hT.center.x-cS.x,y:hT.center.y-cS.y},
-        nl, nBezier=new Map();
+        nl, nBezier=new Map(), nw, ne, sw, se;
 
-        //calcule le centre du nouvelle hexa
+        //calcule les beziers du nouvelle hexa
         svgBezierCircle(hT);
 
 
-        //ATTENTION l'odre d'insertion est important
-        //traite les points suivant la direction du cursor
+        //ATTENTION l'odre d'insertion n'est pas important
+        //traite les points beziers des hexas source et target
+        //suivant la direction du cursor
         switch (angleDir) {
             case 'n-resize':
                 //on ajoute les points dans le sens horaire en partant du sud
@@ -1036,10 +1021,41 @@ class cartoHexa {
                 }
                 break;
             case 'e-resize':
-                h.pointsBezier['ne'][0][0]=x;
-                h.pointsBezier['ne'][0][1]=y;
-                h.pointsBezier['se'][0][0]=x;
-                h.pointsBezier['se'][0][1]=y;
+                /*
+                on change les points de liaison : 
+                  - source = se + ne
+                  - target = nw
+                */  
+                se = svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, -hS.rBord);
+                sw = svgBezierOvalQuarter(hS.centerX, hS.centerY, hS.rBord, -hS.rBord);
+                ne = svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, hS.rBord);        
+                hS.pointsBezier.set('se0',[
+                    [ne[0][0]-hS.wBord/2,se[3][1]],
+                    [ne[0][0]-hS.wBord/2,se[3][1]],
+                    se[3],                        
+                    se[3]                        
+                ]);
+                hS.pointsBezier.set('ne0',ne);
+                nw = hT.pointsBezier.get('nw0');
+                hT.pointsBezier.set('nw0',[
+                    [se[3][0],nw[3][1]],
+                    [se[3][0],nw[3][1]],
+                    [nw[0][0]+hT.wBord/2,nw[3][1]],
+                    [nw[0][0]+hT.wBord/2,nw[3][1]]
+                ]);
+                /*
+                nBezier.set('sw0',hS.pointsBezier.get('sw0'));
+                nBezier.set('nw0',hS.pointsBezier.get('nw0'));
+                nl = hT.hexNumLigne-1;
+                while(hS.pointsBezier.has('ne'+nl)){
+                    if(nl==0){
+                        nBezier.set('ne0',svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, hS.rBord));
+                    }else
+                        nBezier.set('ne'+nl, hS.pointsBezier.get('ne'+nl));
+                    nBezier.set('se'+nl, hS.pointsBezier.get('se'+nl));    
+                    nl--;
+                }
+                */
                 break;
             case 's-resize':
                 h.pointsBezier['se'][3][0]=x;
@@ -1059,8 +1075,8 @@ class cartoHexa {
                 break;
             case 'nw-resize':
                 //on ajoute les points dans le sens horaire en partant du sud-est
-                let se = svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, -hS.rBord);
-                let sw = svgBezierOvalQuarter(hS.centerX, hS.centerY, hS.rBord, -hS.rBord);
+                se = svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, -hS.rBord);
+                sw = svgBezierOvalQuarter(hS.centerX, hS.centerY, hS.rBord, -hS.rBord);
                 nBezier.set('se0',[
                     [sw[0][0]+cT.x,se[3][1]],
                     [sw[0][0]+cT.x,se[3][1]],
@@ -1105,6 +1121,15 @@ class cartoHexa {
     //merci beaucoup à httpHexa://stackoverflow.com/questions/1734745/how-to-create-circle-with-b%C3%A9zier-curves    
     function svgBezierCircle(h) {
         p = d3.path();
+        //rayon du cercle circonscrit de 2 hexa
+        //let r = ((h.layout.size.x/(h.subShapeDetail*2+1))*Math.sqrt(3)/2)*4;
+        //rayon du cercle inscrit
+        //moins la largeur du stroke / 2 cf. https://alexwlchan.net/2021/03/inner-outer-strokes-svg/
+        h.wBord = h.layoutOut.size.x/(h.subShapeDetail*2+1);
+        h.rInscrit = h.layoutOut.size.x*Math.sqrt(3)/2;//rayon du cercle inscrit
+        h.rBord = h.rInscrit-h.wBord/2
+        h.centerX = 0;
+        h.centerY = 0;
         svgBezierOval(h);
         return p.toString();
     }
@@ -1320,8 +1345,9 @@ class cartoHexa {
             let newHexa = setHexaProp(nh,h.r);
             newHexa.hexNumLigne = i;
             newHexa.hexFinLigne = i==line.length-1 ? true : false;
-            newHexa.bord=false;
-            h.r.hexas[0].pointsBezier = svgBezierFusion(h.r.hexas[0], newHexa); 
+            //newHexa.bord=false;
+            //calcul les beziers de la source et de la destination
+            svgBezierFusion(h.r.hexas[i-1], newHexa); 
             h.r.hexas.push(newHexa);
         }
         //met à jour l'espace avec les nouveaux hexa
