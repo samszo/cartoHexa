@@ -648,7 +648,6 @@ class cartoHexa {
                     d3.select(e.currentTarget).style('cursor',h.cursor);
                 })
                 .attr('d',h=>{
-                    if(h.pointsBezier)return svgBezierOvalRedim(h);
                     //rayon du cercle circonscrit de 2 hexa
                     //let r = ((h.layout.size.x/(h.subShapeDetail*2+1))*Math.sqrt(3)/2)*4;
                     //rayon du cercle inscrit
@@ -658,6 +657,7 @@ class cartoHexa {
                     h.centerX = 0;
                     h.centerY = 0;
                     h.espace = d3.select(d3.select('#'+h.id).node().closest(".gEspace"))
+                    if(h.pointsBezier)return svgBezierOvalRedim(h);
                     return svgBezierCircle(h);
                 })
                 .attr('stroke-linecap',"round")
@@ -963,16 +963,16 @@ class cartoHexa {
         //récupère les points des hexa
         let pHexa = hS.layoutOut.polygonCorners(hS.hex),
         //calcule l'angle entre les deux hexa
-        angleDir = getAngleCursor(Math.atan2(hT.center.y - hS.center.y, hT.center.x - hS.center.x)*180/Math.PI),
+        //angleDir = getAngleCursor(Math.atan2(hT.center.y - hS.center.y, hT.center.x - hS.center.x)*180/Math.PI),
         //calcule les centres
         cS = hS.center,        
         cT = {x:hT.center.x-cS.x,y:hT.center.y-cS.y},
-        nl, nBezier=new Map();
+        nl;
 
-        //calcule le centre du nouvelle hexa
-        svgBezierCircle(hT);
+        //calcule le bord du nouvelle hexa
+        hT.pointsBezier = new Map();
 
-        //calcule les portions du bord
+        //calcule les portions du bord régulier
         let bp={
             'se':svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, -hS.rBord),
             'sw':svgBezierOvalQuarter(hS.centerX, hS.centerY, hS.rBord, -hS.rBord),
@@ -981,9 +981,9 @@ class cartoHexa {
         };
 
 
-        //ATTENTION l'odre d'insertion est important
+        //ATTENTION chaque hexa a ces propres bords
         //traite les points suivant la direction du cursor
-        switch (angleDir) {
+        switch (hS.cursor) {
             case 'n-resize':
                 //on ajoute les points dans le sens horaire en partant du sud
                 nBezier.set('sw0',hS.pointsBezier.get('sw0'));
@@ -1043,7 +1043,7 @@ class cartoHexa {
                     nl--;
                 }
                 break;
-            case 'e-resize':
+            case 'nw-resize':
                 h.pointsBezier['ne'][0][0]=x;
                 h.pointsBezier['ne'][0][1]=y;
                 h.pointsBezier['se'][0][0]=x;
@@ -1065,38 +1065,32 @@ class cartoHexa {
                 h.pointsBezier['ne'][1][0]=x;
                 h.pointsBezier['ne'][1][1]=y;
                 break;
-            case 'nw-resize':
-                //on ajoute les points dans le sens horaire en partant du sud-est
-                nBezier.set('se0',[
+            case 'e-resize':
+                //modifications des points de la source
+                hS.pointsBezier.set('se0',[
                     //connecteur swT - seS
                     [bp.sw[0][0]+cT.x,bp.se[3][1]],
                     [bp.sw[0][0]+cT.x,bp.se[3][1]],
                     bp.se[3],                        
                     bp.se[3]                        
                 ]);
-                nBezier.set('sw0',hS.pointsBezier.get('sw0'));
-                nBezier.set('nw0',hS.pointsBezier.get('nw0'));
-                nl = hT.hexNumLigne-1;
-                while(hS.pointsBezier.has('ne'+nl)){
-                    if(nl==0){
-                        nBezier.set('ne0',bp.ne);        
-                    }else
-                        nBezier.set('ne'+nl, hS.pointsBezier.get('ne'+nl));
-                    nl--;
-                }
-                nBezier.set('nw'+hT.hexNumLigne,[
+                hS.pointsBezier.set('sw0',hS.pointsBezier.get('sw0'));
+                hS.pointsBezier.set('nw0',hS.pointsBezier.get('nw0'));
+                hS.pointsBezier.set('ne0',bp.ne);        
+                //modification de la destination
+                hT.pointsBezier.set('nw'+hT.hexNumLigne,[
                     //connecteur neS - nwT
-                    [bp.ne[0][0],cT.y+bp.nw[3][1]],
-                    [bp.ne[0][0],cT.y+bp.nw[3][1]],
-                    [bp.nw[3][0]+cT.x,cT.y+bp.nw[3][1]],
-                    [bp.nw[3][0]+cT.x,cT.y+bp.nw[3][1]],
+                    [bp.ne[0][0]-cT.x,bp.nw[3][1]],
+                    [bp.ne[0][0]-cT.x,bp.nw[3][1]],
+                    [bp.nw[3][0],bp.nw[3][1]],
+                    [bp.nw[3][0],bp.nw[3][1]],
                 ]);    
                 ['ne', 'se', 'sw'].forEach(dir=>{
-                    nBezier.set(dir+hT.hexNumLigne,[
-                    [bp[dir][3][0]+cT.x,cT.y+bp[dir][3][1]],
-                    [bp[dir][2][0]+cT.x,cT.y+bp[dir][2][1]],
-                    [bp[dir][1][0]+cT.x,cT.y+bp[dir][1][1]],
-                    [bp[dir][0][0]+cT.x,cT.y+bp[dir][0][1]],
+                    hT.pointsBezier.set(dir+hT.hexNumLigne,[
+                        bp[dir][3],
+                        bp[dir][2],
+                        bp[dir][1],
+                        bp[dir][0]
                     ])
                 });
                 break;
@@ -1110,8 +1104,6 @@ class cartoHexa {
                 break;        
         }        
     
-        return nBezier;
-
     }
 
 
@@ -1333,8 +1325,9 @@ class cartoHexa {
             let newHexa = setHexaProp(nh,h.r);
             newHexa.hexNumLigne = i;
             newHexa.hexFinLigne = i==line.length-1 ? true : false;
-            newHexa.bord=false;
-            h.r.hexas[0].pointsBezier = svgBezierFusion(h.r.hexas[0], newHexa); 
+            newHexa.bord=true;
+            //calcul les bords
+            svgBezierFusion(h.r.hexas[i-1], newHexa); 
             h.r.hexas.push(newHexa);
         }
         //met à jour l'espace avec les nouveaux hexa
