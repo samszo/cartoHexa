@@ -31,7 +31,10 @@ class cartoHexa {
         , onDrag=false, onZoom=false, onAdd=false, onRedim = false
         , subShapeDetail=2
         , p = d3.path(), svgHexa
-        , rapportMin=1, rapportMax=1, rapportWidth;
+        , rapportMin=1, rapportMax=1, rapportWidth
+        //relation entre la direction Geo et Hex Flat cf. Hex.directions in hex-lib.js
+        //ATTENTION il n'y a pas de e ni de w
+        , hexGeoDir = {'n':2,'ne':1,'se':0,'s':5,'sw':4,'nw':3};
 
         this.init = function () {
 
@@ -556,7 +559,9 @@ class cartoHexa {
         );
     }
     function addEspaceHexas(e){
-        e.selectAll(".gHexa").data(e=>e.hexas)
+        e.selectAll(".gHexa").data(e=>{
+            return e.hexas
+        })
         .join(
             enter => {
                 enter.append('g')
@@ -606,6 +611,7 @@ class cartoHexa {
                 return false;
         }        
     }
+
     function addHexaConcept(e){
 
         //construction des formes intérieurs
@@ -634,6 +640,7 @@ class cartoHexa {
         */
         if(bord){
             bord = e.append('path')
+                .attr('id',h=>h.id+'_bord')
                 .attr('class',h=>'bordForme eForme depth'+h.r.depth)
                 .attr('fill','none')
                 .attr('stroke',h=>{
@@ -642,13 +649,11 @@ class cartoHexa {
                 })
                 .on('mousemove',(e,h)=>{
                     //calcul l'angle pour le cursor = la courbe à modifier
-                    let p = d3.pointer(e),
-                    a = Math.atan2(p[1], p[0]) * 180 / Math.PI + 180;
-                    h.cursor = getAngleCursor(a);
+                    let p = d3.pointer(e);
+                    h.cursor = getAngleCursor([0,0],p);
                     d3.select(e.currentTarget).style('cursor',h.cursor);
                 })
                 .attr('d',h=>{
-                    if(h.pointsBezier)return svgBezierOvalRedim(h);
                     h.espace = d3.select(d3.select('#'+h.id).node().closest(".gEspace"))
                     if(h.pointsBezier)return svgBezierOvalRedim(h);
                     return svgBezierCircle(h);
@@ -903,9 +908,8 @@ class cartoHexa {
                 })
                 .on('mousemove',(e,h)=>{
                     //calcul l'angle pour le cursor = la courbe à modifier
-                    let p = d3.pointer(e),
-                    a = Math.atan2(p[1], p[0]) * 180 / Math.PI + 180;
-                    h.cursor = getAngleCursor(a);
+                    let p = d3.pointer(e);
+                    h.cursor = getAngleCursor([0,0],p);
                     d3.select(e.currentTarget).style('cursor',h.cursor);
                 })
                 .attr('d',h=>{
@@ -948,17 +952,12 @@ class cartoHexa {
         let pHexaS = hS.layoutOut.polygonCorners(hS.hex),
         pHexaT = hT.layoutOut.polygonCorners(hT.hex),
         //calcule l'angle entre les deux hexa
-        angleDir = hS.cursor,//getAngleCursor(Math.atan2(hT.center.y - hS.center.y, hT.center.x - hS.center.x)*180/Math.PI),
-        //calcule les centres
-        cS = hS.center,        
-        cT = {x:hT.center.x-cS.x,y:hT.center.y-cS.y},
-        nl, nBezier=new Map(), nw, ne, sw, se;
-
-        //calcule les beziers du nouvelle hexa
-        svgBezierCircle(hT);
-
-        //calcule les portions du bord régulier
-        let bp={
+        angleDir = getAngleCursor([hS.center.x,hS.center.y],[hT.center.x, hT.center.y]),
+        /*
+        calcule les portions du bord régulier
+        pour remplacer ceux modifier par le drag
+        */
+        bp={
             'se':svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, -hS.rBord),
             'sw':svgBezierOvalQuarter(hS.centerX, hS.centerY, hS.rBord, -hS.rBord),
             'ne':svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, hS.rBord),
@@ -966,153 +965,108 @@ class cartoHexa {
         };
 
 
+        //calcule les beziers du nouvelle hexa
+        svgBezierCircle(hT);
+
         //ATTENTION chaque hexa a ces propres bords
         //traite les points suivant la direction du cursor
-        switch (hS.cursor) {
+        switch (angleDir) {
             case 'n-resize':
-                //on ajoute les points dans le sens horaire en partant du sud
-                nBezier.set('sw0',hS.pointsBezier.get('sw0'));
-                nBezier.set('nw0',[
-                    [hS.pointsBezier.get('sw0')[0][0],cS.y-pHexa[3].y],
-                    [hS.pointsBezier.get('sw0')[0][0],-hT.rInscrit/2],
-                    [pHexa[4].x-cS.x+hS.wBord,cS.y-pHexa[4].y],
-                    [pHexa[4].x-cS.x+hS.wBord,cS.y-pHexa[4].y]                        
-                ]);
-                nl = 1;
-                while(hS.pointsBezier.has('sw'+nl)){
-                    nBezier.set('sw'+nl, hS.pointsBezier.get('sw'+nl));
-                    nBezier.set('nw'+nl, hS.pointsBezier.get('nw'+nl));    
-                    nl++;
-                }
-                nBezier.set('sw'+hT.hexNumLigne,[
-                    [pHexa[4].x+hS.wBord-cT.x,hT.centerY+hT.rInscrit],
-                    [pHexa[4].x+hS.wBord-cT.x,hT.centerY+hT.rInscrit],
-                    [hT.pointsBezier.get('nw0')[0][0],hT.centerY+hT.rInscrit/2],
-                    hT.pointsBezier.get('nw0')[0]
-                ]);
-                if(hT.hexFinLigne){
-                    nBezier.set('nw'+hT.hexNumLigne, hT.pointsBezier.get('nw0'));
-                    nBezier.set('ne'+hT.hexNumLigne, hT.pointsBezier.get('ne0'));                            
-                }else{
-                    nBezier.set('nw'+hT.hexNumLigne,[
-                        [hT.pointsBezier.get('sw0')[0][0],cT.y-pHexa[3].y],
-                        [hT.pointsBezier.get('sw0')[0][0],hT.centerY-hT.rInscrit/2],
-                        [pHexa[4].x-cT.x+hS.wBord,cT.y-pHexa[4].y],
-                        [pHexa[4].x-cT.x+hS.wBord,cT.y-pHexa[4].y]                        
-                    ]);
-                    nBezier.set('ne'+hT.hexNumLigne,[
-                        [pHexa[1].x-cT.x-hS.wBord,cT.y-pHexa[4].y],
-                        [pHexa[1].x-cT.x-hS.wBord,cT.y-pHexa[4].y],
-                        [hT.pointsBezier.get('se0')[0][0],hT.centerY-hT.rInscrit/2],
-                        [hT.pointsBezier.get('se0')[0][0],cT.y-pHexa[0].y]
-                    ]);
-                }
-                nBezier.set('se'+hT.hexNumLigne,[
-                    hT.pointsBezier.get('se0')[0],
-                    [hT.pointsBezier.get('se0')[0][0],hT.centerY+hT.rInscrit/2],
-                    [pHexa[1].x-cT.x-hS.wBord,cT.y-pHexa[1].y],
-                    [pHexa[1].x-cT.x-hS.wBord,cT.y-pHexa[1].y]                        
-                ]);
-                nl = hT.hexNumLigne-1;
-                while(hS.pointsBezier.has('ne'+nl)){
-                    if(nl==0){
-                        nBezier.set('ne0',[
-                            [pHexa[1].x-cS.x-hS.wBord,pHexa[1].y-cS.y],
-                            [pHexa[1].x-cS.x-hS.wBord,pHexa[1].y-cS.y],
-                            [hS.pointsBezier.get('se0')[0][0],-hT.rInscrit/2],
-                            [hS.pointsBezier.get('se0')[0][0],cS.y-pHexa[0].y]
-                        ]);
-                    }else
-                        nBezier.set('ne'+nl, hS.pointsBezier.get('ne'+nl));
-                    nBezier.set('se'+nl, hS.pointsBezier.get('se'+nl));    
-                    nl--;
-                }
+                //ce cas ne doit pas se produire
+                console.log('ERREUR:angle impossible : '+angleDir);
                 break;
             case 'e-resize':
+                //ce cas ne doit pas se produire
+                console.log('ERREUR:angle impossible : '+angleDir);
+                break;
+            case 'se-resize':                
                 /*
-                on change les points de liaison : 
+                on change les points de liaison entre la source et la target
+                qui ne sont pas déjà modifié : 
                   - source = se + ne
                   - target = nw
-                */  
-                se = svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, -hS.rBord);
-                sw = svgBezierOvalQuarter(hS.centerX, hS.centerY, hS.rBord, -hS.rBord);
-                ne = svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, hS.rBord);        
-                hS.pointsBezier.set('se0',[
-                    [ne[0][0]-hS.wBord/2,se[3][1]],
-                    [ne[0][0]-hS.wBord/2,se[3][1]],
-                    se[3],                        
-                    se[3]                        
-                ]);
-                hS.pointsBezier.set('ne0',ne);
-                nw = hT.pointsBezier.get('nw0');
-                hT.pointsBezier.set('nw0',[
-                    [se[3][0],nw[3][1]],
-                    [se[3][0],nw[3][1]],
-                    [nw[0][0]+hT.wBord/2,nw[3][1]],
-                    [nw[0][0]+hT.wBord/2,nw[3][1]]
-                ]);
-                /*
-                nBezier.set('sw0',hS.pointsBezier.get('sw0'));
-                nBezier.set('nw0',hS.pointsBezier.get('nw0'));
-                nl = hT.hexNumLigne-1;
-                while(hS.pointsBezier.has('ne'+nl)){
-                    if(nl==0){
-                        nBezier.set('ne0',svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, hS.rBord));
-                    }else
-                        nBezier.set('ne'+nl, hS.pointsBezier.get('ne'+nl));
-                    nBezier.set('se'+nl, hS.pointsBezier.get('se'+nl));    
-                    nl--;
-                }
                 */
+                if(hS.pointsBezier.has('se0')){
+                    hS.pointsBezier.delete('se0');
+                    hS.pointsBezier.set('se_'+angleDir,[
+                        [bp.ne[0][0]-hS.wBord/2,bp.se[3][1]],
+                        [bp.ne[0][0]-hS.wBord/2,bp.se[3][1]],
+                        bp.se[3],                        
+                        bp.se[3]                        
+                    ]);    
+                } 
+                if(hS.pointsBezier.has('ne0')){
+                    hS.pointsBezier.set('ne0',bp.ne);
+                }
+                if(hT.pointsBezier.has('nw0')){
+                    hT.pointsBezier.delete('nw0');
+                    hT.pointsBezier.set('nw_'+angleDir,[
+                        [bp.se[3][0],bp.nw[3][1]],
+                        [bp.se[3][0],bp.nw[3][1]],
+                        [bp.nw[0][0]+hT.wBord/2,bp.nw[3][1]],
+                        [bp.nw[0][0]+hT.wBord/2,bp.nw[3][1]]
+                    ]);
+                }
+                /* on change les points des voisins présents
+                */
+                for (const g in hexGeoDir) {
+                    let d=hexGeoDir[g],
+                    n = hT.hex.neighbor(d);
+                    hS.r.hexas.forEach((h)=>{
+                        //on exclu la source
+                        if(n.toString()==h.hex.toString() && n.toString()!=hS.hex.toString()){
+                            //modificatrion des points
+                            switch (g) {
+                                case 'n':
+                                    hT.pointsBezier.delete('nw_'+angleDir);
+                                    let k = getPointDir('sw', h.pointsBezier);
+                                    h.pointsBezier.delete(k);
+                                    d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
+                                break;
+                            }
+                        }
+                    });
+                }
                 break;
             case 's-resize':
-                h.pointsBezier['se'][3][0]=x;
-                h.pointsBezier['se'][3][1]=y;
-                h.pointsBezier['sw'][3][0]=x;
-                h.pointsBezier['sw'][3][1]=y;
+                //ce cas ne doit pas se produire
+                console.log('ERREUR:angle impossible : '+angleDir);
                 break;
             case 'w-resize':
-                h.pointsBezier['nw'][0][0]=x;
-                h.pointsBezier['nw'][0][1]=y;
-                h.pointsBezier['sw'][0][0]=x;
-                h.pointsBezier['sw'][0][1]=y;
+                //ce cas ne doit pas se produire
+                console.log('ERREUR:angle impossible : '+angleDir);
                 break;
             case 'ne-resize':
-                h.pointsBezier['ne'][1][0]=x;
-                h.pointsBezier['ne'][1][1]=y;
+                /*
+                on change les points de liaison : 
+                  - source = ne + se
+                  - target = sw
+                */  
+                if(hS.pointsBezier.has('se0')){
+                    hS.pointsBezier.set('se0',bp.se);
+                }
+                if(hS.pointsBezier.has('ne0')){
+                    hS.pointsBezier.delete('ne0');
+                    hS.pointsBezier.set('ne_'+angleDir,[
+                        bp.ne[3],                        
+                        bp.ne[3],                        
+                        [bp.se[0][0]-hS.wBord/2,bp.ne[3][1]],
+                        [bp.se[0][0]-hS.wBord/2,bp.ne[3][1]],
+                    ]);
+                }
+                if(hT.pointsBezier.has('sw0')){
+                    hT.pointsBezier.delete('sw0');  
+                    hT.pointsBezier.set('sw_'+angleDir,[
+                        bp.sw[3],
+                        bp.sw[3],
+                        [bp.nw[0][0]+hT.wBord/2,bp.sw[3][1]],
+                        [bp.nw[0][0]+hT.wBord/2,bp.sw[3][1]]
+                    ]);
+                }
                 break;
             case 'e-resize':
-                //modifications des points de la source
-                hS.pointsBezier.set('se0',[
-                    //connecteur swT - seS
-                    [bp.sw[0][0]+cT.x,bp.se[3][1]],
-                    [bp.sw[0][0]+cT.x,bp.se[3][1]],
-                    bp.se[3],                        
-                    bp.se[3]                        
-                ]);
-                hS.pointsBezier.set('sw0',hS.pointsBezier.get('sw0'));
-                hS.pointsBezier.set('nw0',hS.pointsBezier.get('nw0'));
-                hS.pointsBezier.set('ne0',bp.ne);        
-                //modification de la destination
-                hT.pointsBezier.set('nw'+hT.hexNumLigne,[
-                    //connecteur neS - nwT
-                    [bp.ne[0][0]-cT.x,bp.nw[3][1]],
-                    [bp.ne[0][0]-cT.x,bp.nw[3][1]],
-                    [bp.nw[3][0],bp.nw[3][1]],
-                    [bp.nw[3][0],bp.nw[3][1]],
-                ]);    
-                ['ne', 'se', 'sw'].forEach(dir=>{
-                    hT.pointsBezier.set(dir+hT.hexNumLigne,[
-                        bp[dir][3],
-                        bp[dir][2],
-                        bp[dir][1],
-                        bp[dir][0]
-                    ])
-                });
-                break;
-            case 'se-resize':
-                h.pointsBezier['se'][1][0]=x;
-                h.pointsBezier['se'][1][1]=y;
+                //ce cas ne doit pas se produire
+                console.log('ERREUR:angle impossible : '+angleDir);
                 break;
             case 'sw-resize':
                 h.pointsBezier['sw'][1][0]=x;
@@ -1121,7 +1075,6 @@ class cartoHexa {
         }        
     
     }
-
 
     //merci beaucoup à httpHexa://stackoverflow.com/questions/1734745/how-to-create-circle-with-b%C3%A9zier-curves    
     function svgBezierCircle(h) {
@@ -1242,8 +1195,10 @@ class cartoHexa {
         if(nh.q+nh.r+nh.s!=0)nh.s = -nh.q - nh.r;
         return nh;
     }
-    function getAngleCursor(a){
-        let pas = 360/16, dir = "";
+    function getAngleCursor(s,t){
+        //merci à https://gist.github.com/conorbuck/2606166
+        let a = Math.atan2(t[1]-s[1], t[0]-s[0]) * 180 / Math.PI + 180        
+        , pas = 360/16, dir = "";
         if(a<=pas || a>=pas*15)dir = 'w-resize';
         if(a<=pas*3 && a>=pas)dir = 'nw-resize';
         if(a<=pas*5 && a>=pas*3)dir = 'n-resize';
@@ -1267,7 +1222,7 @@ class cartoHexa {
     function redimEspace(e,h){
         let contTrans = container.attr('transform');
         container.attr('transform','');
-        let x=e.x, y=e.y;
+        let x=e.x, y=e.y, k;
         /*Change les points suivant le cursor
             p.moveTo(...points[0]);
             p.bezierCurveTo(...points[1],...points[2],...points[3]);
@@ -1298,16 +1253,18 @@ class cartoHexa {
                 h.pointsBezier.get('sw0')[0][1]=y;
                 break;
             case 'ne-resize':
-                h.pointsBezier.get('ne0')[1][0]=x;
-                h.pointsBezier.get('ne0')[1][1]=y;
+                k = getPointDir('ne', h.pointsBezier);
+                h.pointsBezier.get(k)[1][0]=x;
+                h.pointsBezier.get(k)[1][1]=y;
                 break;
             case 'nw-resize':
                 h.pointsBezier.get('nw0')[1][0]=x;
                 h.pointsBezier.get('nw0')[1][1]=y;
                 break;
             case 'se-resize':
-                h.pointsBezier.get('se0')[1][0]=x;
-                h.pointsBezier.get('se0')[1][1]=y;
+                k = getPointDir('se', h.pointsBezier);
+                h.pointsBezier.get(k)[1][0]=x;
+                h.pointsBezier.get(k)[1][1]=y;
                 break;
             case 'sw-resize':
                 h.pointsBezier.get('sw0')[1][0]=x;
@@ -1315,7 +1272,9 @@ class cartoHexa {
                 break;        
         }
         container.attr('transform',contTrans);
-
+    }
+    function getPointDir(dir, points){
+        return [...points.keys()].filter(k=>k.substring(0,2)==dir)[0];
     }
     function redimEspaceUpdate(e,h){
         d3.select(this).attr("d", d=>svgBezierOvalRedim(d));
@@ -1327,7 +1286,8 @@ class cartoHexa {
                 x:e.x+h.pointer.x,
                 y:e.y+h.pointer.y
                 },h.layoutOut),
-        line = h.hex.linedraw(eh);
+        line = h.hex.linedraw(eh),
+        newHexa, prevHexa;
         //vérification avant extension de l'espace à partir du deuxième hexa de la ligne
         for (let i = 1; i < line.length; i++) {
             let nh = line[i];
@@ -1347,13 +1307,15 @@ class cartoHexa {
                 initGrille(dst,true);
             }
             //ajoute un hexa à l'espace
-            let newHexa = setHexaProp(nh,h.r);
+            newHexa = setHexaProp(nh,h.r);
+            newHexa.espace = h.espace;
             newHexa.hexNumLigne = i;
             newHexa.hexFinLigne = i==line.length-1 ? true : false;
             //newHexa.bord=false;
             //calcul les beziers de la source et de la destination
-            svgBezierFusion(h.r.hexas[i-1], newHexa); 
+            svgBezierFusion(i==1 ? h : prevHexa, newHexa); 
             h.r.hexas.push(newHexa);
+            prevHexa = newHexa;
         }
         //met à jour l'espace avec les nouveaux hexa
         addEspace(null,h.r);
