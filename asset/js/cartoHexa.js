@@ -1011,14 +1011,24 @@ class cartoHexa {
                 */
                 for (const g in hexGeoDir) {
                     let d=hexGeoDir[g],
-                    n = hT.hex.neighbor(d);
+                    neighbor = hT.hex.neighbor(d);
                     hS.r.hexas.forEach((h)=>{
                         //on exclu la source
-                        if(n.toString()==h.hex.toString() && n.toString()!=hS.hex.toString()){
+                        if(neighbor.toString()==h.hex.toString() 
+                        && neighbor.toString()!=hS.hex.toString()){
                             //modificatrion des points
                             switch (g) {
                                 case 'n':
+                                    //modification de la target
                                     hT.pointsBezier.delete('nw_'+angleDir);
+                                    hT.pointsBezier.delete('ne_0');
+                                    hT.pointsBezier.set('ne_'+angleDir,[
+                                        [bp.se[3][0],bp.nw[3][1]],
+                                        [bp.se[3][0],bp.nw[3][1]],
+                                        [bp.nw[0][0]+hT.wBord/2,bp.nw[3][1]],
+                                        [bp.nw[0][0]+hT.wBord/2,bp.nw[3][1]]
+                                    ]);                
+                                    //modification du voisin
                                     let k = getPointDir('sw', h.pointsBezier);
                                     h.pointsBezier.delete(k);
                                     d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
