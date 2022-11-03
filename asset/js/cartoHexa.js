@@ -972,8 +972,56 @@ class cartoHexa {
         //traite les points suivant la direction du cursor
         switch (angleDir) {
             case 'n-resize':
-                //ce cas ne doit pas se produire
-                console.log('ERREUR:angle impossible : '+angleDir);
+                /* on change les points des voisins présents
+                */
+                for (const g in hexGeoDir) {
+                    let d=hexGeoDir[g], k,
+                    n = hT.hex.neighbor(d);
+                    hS.r.hexas.forEach((h)=>{
+                        if(n.toString()==h.hex.toString()){
+                            let pHexa = h.layoutOut.polygonCorners(h.hex);
+                            //modificatrion des points
+                            switch (g) {
+                                case 'n':
+                                    hT.pointsBezier.delete('nw_'+angleDir);
+                                    k = getPointDir('sw', h.pointsBezier);
+                                    h.pointsBezier.delete(k);
+                                    d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
+                                break;
+                                case 's':
+                                    //modifie le voisin
+                                    h.pointsBezier.set('ne0',[
+                                        bp.ne[0],                        
+                                        bp.ne[1],                        
+                                        bp.ne[2],                        
+                                        [pHexa[5].x-h.center.x-h.wBord/2,h.center.y-pHexa[5].y]
+                                    ]);    
+                                    h.pointsBezier.set('nw0',[
+                                        bp.nw[0],                        
+                                        bp.nw[1],                        
+                                        bp.nw[2],                        
+                                        [pHexa[4].x-h.center.x+h.wBord/2,h.center.y-pHexa[4].y]
+                                    ]);    
+                                    d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
+                                    //modifie la target
+                                    hT.pointsBezier.set('se0',[
+                                        bp.se[0],                        
+                                        bp.se[1],                        
+                                        bp.se[2],                        
+                                        [hT.center.x-pHexaT[2].x-hT.wBord/2,hT.center.y-pHexaT[2].y]
+                                    ]);    
+                                    hT.pointsBezier.set('sw0',[
+                                        bp.sw[0],
+                                        bp.sw[1],
+                                        bp.sw[2],                                     
+                                        [hT.center.x-pHexaT[1].x+hT.wBord/2,hT.center.y-pHexaT[1].y]
+                                    ]);    
+                                    break;
+                            }
+                        }
+                    });
+                }
+
                 break;
             case 'e-resize':
                 //ce cas ne doit pas se produire
