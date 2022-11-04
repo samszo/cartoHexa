@@ -34,7 +34,18 @@ class cartoHexa {
         , rapportMin=1, rapportMax=1, rapportWidth
         //relation entre la direction Geo et Hex Flat cf. Hex.directions in hex-lib.js
         //ATTENTION il n'y a pas de e ni de w
-        , hexGeoDir = {'n':2,'ne':1,'se':0,'s':5,'sw':4,'nw':3};
+        , hexGeoDir = {'n':2,'ne':1,'se':0,'s':5,'sw':4,'nw':3}
+        //définition des points à modifier pour ledrag du bord
+        , pointsMove = {
+            'n-resize':[{'d':'ne','p':3},{'d':'nw','p':3}],                
+            'e-resize':[{'d':'ne','p':0},{'d':'se','p':0}],
+            's-resize':[{'d':'se','p':3},{'d':'sw','p':3}],
+            'w-resize':[{'d':'nw','p':0},{'d':'sw','p':0}],
+            'ne-resize':[{'d':'ne','p':0},{'d':'se','p':0}],
+            'nw-resize':[{'d':'nw','p':1},{'d':'sw','p':3}],
+            'se-resize':[{'d':'se','p':1},{'d':'se','p':2}],
+            'sw-resize':[{'d':'sw','p':1},{'d':'sw','p':2}]
+            };
 
         this.init = function () {
 
@@ -937,103 +948,479 @@ class cartoHexa {
             'ne':,
             'sw':,
             'se':
-        //ordre des corners de l'hexa
-            'w':,
-            'sw':,
-            'se':,
-            'e':
-            'ne':
-            'nw':
+        //ordre des corners de l'hexa change suivant la position de l"hexa
         //définition d'un segment
             p.moveTo(...points[0]);
             p.bezierCurveTo(...points[1],...points[2],...points[3]);
         */      
-        //récupère les points des hexa
-        let pHexa, k,
         //calcule l'angle entre les deux hexa
-        angleDir = getAngleCursor([hS.center.x,hS.center.y],[hT.center.x, hT.center.y]),
+        //angleDir = getAngleCursor([hS.center.x,hS.center.y],[hT.center.x, hT.center.y]),
         /*
         calcule les portions du bord régulier
         pour remplacer ceux modifier par le drag
         */
-        bp={
+        let bp={
             'se':svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, -hS.rBord),
             'sw':svgBezierOvalQuarter(hS.centerX, hS.centerY, hS.rBord, -hS.rBord),
             'ne':svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, hS.rBord),
             'nw':svgBezierOvalQuarter(hS.centerX, hS.centerY, hS.rBord, hS.rBord)
         }
-        , xRela, yRela, neighborsIn;
+        , pHexaT = hT.layoutOut.polygonCorners(hT.hex)
+        , h, pHexa
+        , xRela, yRela, neighbors={"c":"","hexas":{}}, d, n, k;
 
 
         //calcule les beziers du nouvelle hexa
         svgBezierCircle(hT);
 
         //ATTENTION chaque hexa a ces propres bords
-        //traite les points suivant la direction du cursor
-        switch (angleDir) {
-            case 'n-resize':
-                /* on change les points des voisins présents
-                */
-                for (const g in hexGeoDir) {
-                    let d=hexGeoDir[g], k,
-                    n = hT.hex.neighbor(d);
-                    hS.r.hexas.forEach((h)=>{
-                        if(n.toString()==h.hex.toString()){
-                            let pHexa = h.layoutOut.polygonCorners(h.hex);
-                            //modificatrion des points
-                            switch (g) {
-                                case 'n':
-                                    hT.pointsBezier.delete('nw_'+angleDir);
-                                    k = getPointDir('sw', h.pointsBezier);
-                                    h.pointsBezier.delete(k);
-                                    d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
-                                break;
-                                case 's':
-                                    //modifie le voisin
-                                    h.pointsBezier.set('ne0',[
-                                        bp.ne[0],                        
-                                        bp.ne[1],                        
-                                        bp.ne[2],                        
-                                        [pHexa[5].x-h.center.x-h.wBord/2,h.center.y-pHexa[5].y]
-                                    ]);    
-                                    h.pointsBezier.set('nw0',[
-                                        bp.nw[0],                        
-                                        bp.nw[1],                        
-                                        bp.nw[2],                        
-                                        [pHexa[4].x-h.center.x+h.wBord/2,h.center.y-pHexa[4].y]
-                                    ]);    
-                                    d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
-                                    //modifie la target
-                                    hT.pointsBezier.set('se0',[
-                                        bp.se[0],                        
-                                        bp.se[1],                        
-                                        bp.se[2],                        
-                                        [hT.center.x-pHexaT[2].x-hT.wBord/2,hT.center.y-pHexaT[2].y]
-                                    ]);    
-                                    hT.pointsBezier.set('sw0',[
-                                        bp.sw[0],
-                                        bp.sw[1],
-                                        bp.sw[2],                                     
-                                        [hT.center.x-pHexaT[1].x+hT.wBord/2,hT.center.y-pHexaT[1].y]
-                                    ]);    
-                                    break;
-                            }
-                        }
-                    });
+        /* on recherche tous voisins présents        
+        */
+        for (const g in hexGeoDir) {
+            d=hexGeoDir[g];
+            n = hT.hex.neighbor(d);
+            hS.r.hexas.forEach((nh)=>{
+                if(n.toString()==nh.hex.toString()){
+                    neighbors.c+=g+','; 
+                    neighbors.hexas[g]=nh;
                 }
+            });
+        }
+        neighbors.c = neighbors.c.substring(0,neighbors.c.length-1);
+        console.log(neighbors.c);
+        //modification des points suivant la combinaison des voisins
+        //ATTENTION l'odre des points est important pour le drag des bords
+        switch (neighbors.c) {
+            /*            
+            n,ne
+            n,se
+            ne,se
+            n,s
+            ne,s
+            se,s
+            n,sw
+            ne,sw
+            se,sw
+            s,sw
+            n,nw
+            ne,nw
+            se,nw
+            s,nw
+            sw,nw
+            n,ne,se
+            n,ne,s
+            n,se,s
+            ne,se,s
+            n,ne,sw
+            n,se,sw
+            ne,se,sw
+            n,s,sw
+            ne,s,sw
+            se,s,sw
+            n,ne,nw
+            n,se,nw
+            ne,se,nw
+            n,s,nw
+            ne,s,nw
+            se,s,nw
+            n,sw,nw
+            ne,sw,nw
+            se,sw,nw
+            s,sw,nw
+            n,ne,se,s
+            n,ne,se,sw
+            n,ne,s,sw
+            n,se,s,sw
+            ne,se,s,sw
+            n,ne,se,nw
+            n,ne,s,nw
+            n,se,s,nw
+            ne,se,s,nw
+            n,ne,sw,nw
+            n,se,sw,nw
+            ne,se,sw,nw
+            n,s,sw,nw
+            ne,s,sw,nw
+            se,s,sw,nw
+            n,ne,se,s,sw
+            n,ne,se,s,nw
+            n,ne,se,sw,nw
+            n,ne,s,sw,nw
+            n,se,s,sw,nw
+            ne,se,s,sw,nw
+            n,ne,se,s,sw,nw
+            */
+            /*
+            pointsFusion = {
+                'n,ne':['nh':'n','cp':[{'d':'sw'}]]
+            }
+            */        
+            case 'n,ne':
+                //modifie les voisins
+                h = neighbors.hexas['n'];
+                pHexa = h.layoutOut.polygonCorners(h.hex);
+                changePoints(h,'sw',neighbors.c,[
+                    bp.sw[0],                        
+                    bp.sw[1],                        
+                    bp.sw[2],                        
+                    [pHexa[2].x-h.center.x+h.wBord/2,h.center.y-pHexa[2].y]
+                ]);    
+                h.pointsBezier.delete('se0');
+                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
 
+                h = neighbors.hexas['ne'];
+                pHexa = h.layoutOut.polygonCorners(h.hex);
+                changePoints(h,'sw',neighbors.c,[
+                    bp.sw[3],                        
+                    bp.sw[2],                        
+                    [h.center.x-pHexa[1].x-h.wBord/2,h.center.y-pHexa[1].y-h.wBord/2],
+                    [h.center.x-pHexa[1].x-h.wBord/2,h.center.y-pHexa[1].y-h.wBord/2]
+                ]); 
+                changePoints(h,'ne',neighbors.c,[
+                    bp.ne[0],                        
+                    bp.ne[1],                        
+                    bp.ne[2],                        
+                    [hT.center.x-pHexa[4].x-hT.wBord/2,hT.center.y-pHexa[4].y]
+                ]);       
+                h.pointsBezier.delete('nw0');
+                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
+
+                //modifie la target
+                changePoints(hT,'nw',neighbors.c,[
+                    bp.nw[0],
+                    bp.nw[1],
+                    bp.nw[2],                                     
+                    [hT.center.x-pHexaT[5].x+hT.wBord/2,hT.center.y-pHexaT[5].y]
+                ]);    
+                changePoints(hT,'se',neighbors.c,[
+                    bp.se[3],
+                    bp.se[2],
+                    bp.se[1],
+                    [hT.center.x-pHexaT[3].x-hT.wBord/2,hT.center.y-pHexaT[3].y-hT.wBord/2]
+                ]);    
+                hT.pointsBezier.delete('ne0');
                 break;
-            case 'e-resize':
-                //ce cas ne doit pas se produire
-                console.log('ERREUR:angle impossible : '+angleDir);
+            case 'ne,se':
+                //modifie les voisins
+                h = neighbors.hexas['ne'];
+                pHexa = h.layoutOut.polygonCorners(h.hex);
+                changePoints(h,'nw',neighbors.c,[
+                    bp.nw[3],                        
+                    bp.nw[2],                        
+                    bp.nw[1],                        
+                    [h.center.x-pHexa[0].x+h.wBord/2,h.center.y-pHexa[0].y+h.wBord/2]
+                ]);
+                changePoints(h,'se',neighbors.c,[
+                    bp.se[0],                        
+                    bp.se[1],                        
+                    bp.se[2],                        
+                    [pHexa[1].x-h.center.x-h.wBord/2,h.center.y-pHexa[1].y]
+                ]);
+                k = getPointDir('sw', h.pointsBezier);    
+                h.pointsBezier.delete(k);
+                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
+
+                h = neighbors.hexas['se'];
+                pHexa = h.layoutOut.polygonCorners(h.hex);
+                changePoints(h,'sw',neighbors.c,[
+                    bp.sw[3],                        
+                    bp.sw[2],                        
+                    bp.sw[1],                        
+                    [pHexa[3].x-h.center.x+h.wBord/2,h.center.y-pHexa[3].y-h.wBord/2]
+                ]); 
+                changePoints(h,'ne',neighbors.c,[
+                    bp.ne[0],                        
+                    bp.ne[1],                        
+                    bp.ne[2],                        
+                    [h.center.x-pHexa[4].x-h.wBord/2,h.center.y-pHexa[4].y]
+                ]);       
+                k = getPointDir('nw', h.pointsBezier);    
+                h.pointsBezier.delete(k);
+                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
+                //modifie la target
+                changePoints(hT,'ne',neighbors.c,[
+                    bp.ne[3],
+                    bp.ne[2],
+                    [hT.center.x-pHexaT[4].x+hT.wBord/2,hT.center.y-pHexaT[4].y+hT.wBord/2],
+                    [hT.center.x-pHexaT[4].x+hT.wBord/2,hT.center.y-pHexaT[4].y+hT.wBord/2]
+                ]);    
+                changePoints(hT,'se',neighbors.c,[
+                    bp.se[3],
+                    bp.se[2],
+                    [hT.center.x-pHexaT[2].x+hT.wBord/2,hT.center.y-pHexaT[2].y-hT.wBord/2],
+                    [hT.center.x-pHexaT[2].x+hT.wBord/2,hT.center.y-pHexaT[2].y-hT.wBord/2]
+                ]);    
                 break;
-            case 'se-resize':                
+            case 'n':
+                //modifie le voisin
+                h = neighbors.hexas['n'];
+                pHexa = h.layoutOut.polygonCorners(h.hex);
+                changePoints(h,'se',neighbors.c,[
+                    bp.se[0],                        
+                    bp.se[1],                        
+                    bp.se[2],                        
+                    [pHexa[1].x-h.center.x-h.wBord/2,h.center.y-pHexa[1].y]
+                ]);    
+                changePoints(h,'sw',neighbors.c,[
+                    bp.sw[0],                        
+                    bp.sw[1],                        
+                    bp.sw[2],                        
+                    [pHexa[2].x-h.center.x+h.wBord/2,h.center.y-pHexa[2].y-h.wBord/2]
+                ]);    
+                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
+                //modifie la target
+                changePoints(hT,'ne',neighbors.c,[
+                    bp.ne[0],                        
+                    bp.ne[1],                        
+                    bp.ne[2],                        
+                    [hT.center.x-pHexaT[4].x-hT.wBord/2,hT.center.y-pHexaT[4].y]
+                ]);    
+                changePoints(hT,'nw',neighbors.c,[
+                    bp.nw[0],
+                    bp.nw[1],
+                    bp.nw[2],                                     
+                    [hT.center.x-pHexaT[5].x+hT.wBord/2,hT.center.y-pHexaT[5].y]
+                ]);    
+                break;
+            case 'ne':
+                //modifie le voisin
+                h = neighbors.hexas['ne'];
+                pHexa = h.layoutOut.polygonCorners(h.hex);
+                changePoints(h,'sw',neighbors.c,[
+                        bp.sw[3],
+                        bp.sw[3],
+                        [pHexa[2].x-h.center.x-h.wBord/2,h.center.y-pHexa[2].y-h.wBord/2],
+                        [pHexa[2].x-h.center.x-h.wBord/2,h.center.y-pHexa[2].y-h.wBord/2]
+                    ]);
+                changePoints(h,'nw',neighbors.c,[
+                        bp.nw[3],
+                        bp.nw[2],
+                        bp.nw[1],
+                        [h.center.x-pHexa[0].x+h.wBord/2,h.center.y-pHexa[0].y+hT.wBord/2]
+                    ]);
+                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
+                //modifie la target
+                changePoints(hT,'ne',neighbors.c,[
+                    bp.ne[3],                        
+                    bp.ne[2],                        
+                    [hT.center.x-pHexaT[4].x+hT.wBord/2,hT.center.y-pHexaT[4].y+hT.wBord/2],
+                    [hT.center.x-pHexaT[4].x+hT.wBord/2,hT.center.y-pHexaT[4].y+hT.wBord/2]
+                ]);    
+                changePoints(hT,'se',neighbors.c,[
+                    bp.se[3],
+                    bp.se[2],
+                    bp.se[1],
+                    [hT.center.x-pHexaT[3].x-hT.wBord/2,hT.center.y-pHexaT[3].y-hT.wBord/2]
+                ]);    
+                break;
+            case 'se':
+                    //modifie le voisin
+                    h = neighbors.hexas['se'];
+                    pHexa = h.layoutOut.polygonCorners(h.hex);
+                    changePoints(h,'nw',neighbors.c,[
+                        bp.nw[3],
+                        bp.nw[2],
+                        [pHexa[4].x-h.center.x-h.wBord/2,h.center.y-pHexa[4].y+h.wBord/2],
+                        [pHexa[4].x-h.center.x-h.wBord/2,h.center.y-pHexa[4].y+h.wBord/2]
+                    ]);
+                    changePoints(h,'sw',neighbors.c,[
+                        bp.sw[3],
+                        bp.sw[2],
+                        bp.sw[1],
+                        [h.center.x-pHexa[0].x+h.wBord/2,h.center.y-pHexa[0].y-hT.wBord/2]
+                    ]);
+                    d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
+                    //modifie la target
+                    changePoints(hT,'se',neighbors.c,[
+                        bp.se[3],                        
+                        bp.se[2],                        
+                        [hT.center.x-pHexaT[2].x+hT.wBord/2,hT.center.y-pHexaT[2].y-hT.wBord/2],
+                        [hT.center.x-pHexaT[2].x+hT.wBord/2,hT.center.y-pHexaT[2].y-hT.wBord/2]
+                    ]);    
+                    changePoints(hT,'ne',neighbors.c,[
+                        bp.ne[3],
+                        bp.ne[2],
+                        bp.ne[1],
+                        [hT.center.x-pHexaT[3].x-hT.wBord/2,hT.center.y-pHexaT[3].y+hT.wBord/2]
+                    ]);    
+                    break;
+            case 's':
+                //modifie le voisin
+                h = neighbors.hexas['s'];
+                pHexa = h.layoutOut.polygonCorners(h.hex);
+                changePoints(h,'ne',neighbors.c,[
+                    bp.ne[0],                        
+                    bp.ne[1],                        
+                    bp.ne[2],                        
+                    [pHexa[5].x-h.center.x-h.wBord/2,h.center.y-pHexa[5].y]
+                ]);    
+                changePoints(h,'nw',neighbors.c,[
+                    bp.nw[0],                        
+                    bp.nw[1],                        
+                    bp.nw[2],                        
+                    [pHexa[4].x-h.center.x+h.wBord/2,h.center.y-pHexa[4].y]
+                ]);    
+                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
+                //modifie la target
+                changePoints(hT,'se',neighbors.c,[
+                    bp.se[0],                        
+                    bp.se[1],                        
+                    bp.se[2],                        
+                    [hT.center.x-pHexaT[2].x-hT.wBord/2,hT.center.y-pHexaT[2].y]
+                ]);    
+                changePoints(hT,'sw',neighbors.c,[
+                    bp.sw[0],
+                    bp.sw[1],
+                    bp.sw[2],                                     
+                    [hT.center.x-pHexaT[1].x+hT.wBord/2,hT.center.y-pHexaT[1].y]
+                ]);    
+                break;
+            case 'sw':
+                //modifie le voisin
+                h = neighbors.hexas['sw'];
+                pHexa = h.layoutOut.polygonCorners(h.hex);
+                changePoints(h,'ne',neighbors.c,[
+                    bp.ne[3],
+                    bp.ne[3],
+                    [pHexa[5].x-h.center.x+h.wBord/2,h.center.y-pHexa[5].y+h.wBord/2],
+                    [pHexa[5].x-h.center.x+h.wBord/2,h.center.y-pHexa[5].y+h.wBord/2]
+                ])
+                changePoints(h,'se',neighbors.c,[
+                    bp.se[3],
+                    bp.se[2],
+                    bp.se[1],
+                    [h.center.x-pHexa[3].x-h.wBord/2,h.center.y-pHexa[3].y-hT.wBord/2]
+                ]);
+                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                                                
+                //modifie la target
+                changePoints(hT,'sw',neighbors.c,[
+                    bp.sw[3],                        
+                    bp.sw[3],                        
+                    [hT.center.x-pHexaT[1].x-hT.wBord/2,hT.center.y-pHexaT[1].y-hT.wBord/2],
+                    [hT.center.x-pHexaT[1].x-hT.wBord/2,hT.center.y-pHexaT[1].y-hT.wBord/2]
+                ]);    
+                changePoints(hT,'nw',neighbors.c,[
+                    [hT.center.x-pHexaT[0].x+hT.wBord/2,hT.center.y-pHexaT[0].y+hT.wBord/2],
+                    bp.nw[1],                        
+                    bp.nw[2],                        
+                    bp.nw[3]                        
+                ]);    
+            break;
+            case 'nw':
+                //modifie le voisin
+                h = neighbors.hexas['nw'];
+                pHexa = h.layoutOut.polygonCorners(h.hex);
+                changePoints(h,'ne',neighbors.c,[
+                    bp.ne[3],
+                    bp.ne[2],
+                    bp.ne[1],
+                    [pHexa[0].x-h.center.x-h.wBord/2,h.center.y-pHexa[0].y+h.wBord/2]
+                ]);
+                changePoints(h,'se',neighbors.c,[
+                    [h.center.x-pHexa[2].x+h.wBord/2,h.center.y-pHexa[2].y-hT.wBord/2],
+                    [h.center.x-pHexa[2].x+h.wBord/2,h.center.y-pHexa[2].y-hT.wBord/2],
+                    bp.se[2],
+                    bp.se[3]
+                ]);
+                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                                                
+                //modifie la target
+                changePoints(hT,'nw',neighbors.c,[
+                    [hT.center.x-pHexaT[5].x-hT.wBord/2,hT.center.y-pHexaT[5].y+hT.wBord/2],
+                    [hT.center.x-pHexaT[5].x-hT.wBord/2,hT.center.y-pHexaT[5].y+hT.wBord/2],
+                    bp.nw[2],                        
+                    bp.nw[3],                        
+                ]);    
+                changePoints(hT,'sw',neighbors.c,[
+                    bp.sw[3],                        
+                    bp.sw[2],                        
+                    bp.sw[1],                        
+                    [hT.center.x-pHexaT[0].x+hT.wBord/2,hT.center.y-pHexaT[0].y-hT.wBord/2]
+                ]);    
+            break;
+            default:
+                console.log('combinaison non gérée : '+neighbors.c);
+            break;
+        }
+
+
+/*
+                    pHexa = h.layoutOut.polygonCorners(h.hex);
+                    //modificatrion des points
+                    switch (g) {
+                        case 'sw':
+                            //modifie le voisin
+                            h.pointsBezier.set('ne0',[
+                                bp.ne[3],
+                                bp.ne[3],
+                                [pHexa[5].x-h.center.x+h.wBord/2,h.center.y-pHexa[5].y+h.wBord/2],
+                                [pHexa[5].x-h.center.x+h.wBord/2,h.center.y-pHexa[5].y+h.wBord/2]
+                            ]);
+                            h.pointsBezier.set('se0',[
+                                bp.se[3],
+                                bp.se[2],
+                                bp.se[1],
+                                [h.center.x-pHexa[3].x-h.wBord/2,h.center.y-pHexa[3].y-hT.wBord/2]
+                            ]);
+                            d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                                                
+                            //modifie la target
+                            hT.pointsBezier.set('sw0',[
+                                bp.sw[3],                        
+                                bp.sw[3],                        
+                                [hT.center.x-pHexaT[1].x-hT.wBord/2,hT.center.y-pHexaT[1].y-hT.wBord/2],
+                                [hT.center.x-pHexaT[1].x-hT.wBord/2,hT.center.y-pHexaT[1].y-hT.wBord/2]
+                            ]);    
+                            hT.pointsBezier.set('nw0',[
+                                bp.nw[3],                        
+                                bp.nw[2],                        
+                                bp.nw[1],                        
+                                [hT.center.x-pHexaT[0].x+hT.wBord/2,hT.center.y-pHexaT[0].y+hT.wBord/2]
+                            ]);    
+                            break;
+                        case 'n':
+                            hT.pointsBezier.delete('nw_'+angleDir);
+                            k = getPointDir('sw', h.pointsBezier);
+                            h.pointsBezier.delete(k);
+                            d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
+                            break;
+                        case 's':
+                            //modifie le voisin
+                            h.pointsBezier.set('ne0',[
+                                bp.ne[0],                        
+                                bp.ne[1],                        
+                                bp.ne[2],                        
+                                [pHexa[5].x-h.center.x-h.wBord/2,h.center.y-pHexa[5].y]
+                            ]);    
+                            h.pointsBezier.set('nw0',[
+                                bp.nw[0],                        
+                                bp.nw[1],                        
+                                bp.nw[2],                        
+                                [pHexa[4].x-h.center.x+h.wBord/2,h.center.y-pHexa[4].y]
+                            ]);    
+                            d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
+                            //modifie la target
+                            hT.pointsBezier.set('se0',[
+                                bp.se[0],                        
+                                bp.se[1],                        
+                                bp.se[2],                        
+                                [hT.center.x-pHexaT[2].x-hT.wBord/2,hT.center.y-pHexaT[2].y]
+                            ]);    
+                            hT.pointsBezier.set('sw0',[
+                                bp.sw[0],
+                                bp.sw[1],
+                                bp.sw[2],                                     
+                                [hT.center.x-pHexaT[1].x+hT.wBord/2,hT.center.y-pHexaT[1].y]
+                            ]);    
+                            break;
+                    }
+                }
+            });
+        }
+        */
                 /*
                 on change les points de liaison entre la source et la target
                 qui ne sont pas déjà modifié : 
                   - source = se + ne
                   - target = nw
-                */
                 if(hS.pointsBezier.has('se0')){
                     hS.pointsBezier.delete('se0');
                     hS.pointsBezier.set('se_'+angleDir,[
@@ -1087,7 +1474,48 @@ class cartoHexa {
             }
             d3.select('#'+n.id+'_bord').attr('d',svgBezierOvalRedim(n));                                                    
         });
+                */
 
+    }
+
+
+    function changePoints(h,d,n,p){
+        if(h.pointsBezier.has(d+'0')){
+            //let k = getPointDir(d, h.pointsBezier);    
+            h.pointsBezier.set(d+n,p);
+            h.pointsBezier.delete(d+'0');    
+        }else if(h.pointsBezier.has(d+'move')){
+            //on ne chgange que les points ayant bougé ?
+            h.pointsBezier.set(d+n,p);
+            h.pointsBezier.delete(d+'move');    
+        }
+    }
+
+    function getCombinations(valuesArray)
+    {    
+        var combi = [];
+        var temp = [];
+        var slent = Math.pow(2, valuesArray.length);
+        
+        for (var i = 0; i < slent; i++)
+        {
+            temp = [];
+            for (var j = 0; j < valuesArray.length; j++)
+            {
+                if ((i & Math.pow(2, j)))
+                {
+                    temp.push(valuesArray[j]);
+                }
+            }
+            if (temp.length > 0)
+            {
+                combi.push(temp);
+            }
+        }
+        
+        combi.sort((a, b) => a.length - b.length);
+        console.log(combi.join("\n"));
+        return combi;
     }
 
     //récupère les voisins d'un hexa dans l'intérieur auquel il appartient
@@ -1261,53 +1689,24 @@ class cartoHexa {
         /*Change les points suivant le cursor
             p.moveTo(...points[0]);
             p.bezierCurveTo(...points[1],...points[2],...points[3]);
-        */      
-        switch (h.cursor) {
-            case 'n-resize':
-                h.pointsBezier.get('ne0')[3][0]=x;
-                h.pointsBezier.get('ne0')[3][1]=y;
-                h.pointsBezier.get('nw0')[3][0]=x;
-                h.pointsBezier.get('nw0')[3][1]=y;
-                break;
-            case 'e-resize':
-                h.pointsBezier.get('ne0')[0][0]=x;
-                h.pointsBezier.get('ne0')[0][1]=y;
-                h.pointsBezier.get('se0')[0][0]=x;
-                h.pointsBezier.get('se0')[0][1]=y;
-                break;
-            case 's-resize':
-                h.pointsBezier.get('se0')[3][0]=x;
-                h.pointsBezier.get('se0')[3][1]=y;
-                h.pointsBezier.get('sw0')[3][0]=x;
-                h.pointsBezier.get('sw0')[3][1]=y;
-                break;
-            case 'w-resize':
-                h.pointsBezier.get('nw0')[0][0]=x;
-                h.pointsBezier.get('nw0')[0][1]=y;
-                h.pointsBezier.get('sw0')[0][0]=x;
-                h.pointsBezier.get('sw0')[0][1]=y;
-                break;
-            case 'ne-resize':
-                k = getPointDir('ne', h.pointsBezier);
-                h.pointsBezier.get(k)[1][0]=x;
-                h.pointsBezier.get(k)[1][1]=y;
-                break;
-            case 'nw-resize':
-                h.pointsBezier.get('nw0')[1][0]=x;
-                h.pointsBezier.get('nw0')[1][1]=y;
-                break;
-            case 'se-resize':
-                k = getPointDir('se', h.pointsBezier);
-                h.pointsBezier.get(k)[1][0]=x;
-                h.pointsBezier.get(k)[1][1]=y;
-                break;
-            case 'sw-resize':
-                h.pointsBezier.get('sw0')[1][0]=x;
-                h.pointsBezier.get('sw0')[1][1]=y;
-                break;        
-        }
+        */ 
+        console.log('redimEspace : '+h.cursor);
+        movePoints(h, pointsMove[h.cursor],x,y);
         container.attr('transform',contTrans);
     }
+    function movePoints(h, dirs, x, y){
+        let k, p;
+        dirs.forEach(d=>{
+            //on supprime les anciens points pour définir des points move
+            k = getPointDir(d.d, h.pointsBezier);
+            p = h.pointsBezier.get(k);
+            p[d.p][0]=x;
+            p[d.p][1]=y;
+            h.pointsBezier.delete(k);                                        
+            h.pointsBezier.set(d.d+'move',p);                                        
+        })
+    }
+
     function getPointDir(dir, points){
         return [...points.keys()].filter(k=>k.substring(0,2)==dir)[0];
     }
