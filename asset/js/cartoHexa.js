@@ -42,10 +42,94 @@ class cartoHexa {
             's-resize':[{'d':'se','p':3},{'d':'sw','p':3}],
             'w-resize':[{'d':'nw','p':0},{'d':'sw','p':0}],
             'ne-resize':[{'d':'ne','p':0},{'d':'se','p':0}],
-            'nw-resize':[{'d':'nw','p':1},{'d':'sw','p':3}],
+            'nw-resize':[{'d':'nw','p':0},{'d':'sw','p':0}],
             'se-resize':[{'d':'se','p':1},{'d':'se','p':2}],
             'sw-resize':[{'d':'sw','p':1},{'d':'sw','p':2}]
-            };
+            }
+        , pointsFusion = {
+            'n,ne':[
+                {'nh':'n','cp':[
+                    {'d':'sw','p':[
+                        {'bp':'sw','v':0},
+                        {'bp':'sw','v':1},
+                        {'bp':'sw','v':2},
+                        {'ph':1,'bx':'+','by':''}                        
+                    ]}
+                    ],'dp':['se']},
+                {'nh':'ne','cp':[
+                    {'d':'sw','p':[
+                        {'bp':'sw','v':3},
+                        {'bp':'sw','v':2},
+                        {'ph':1,'bx':'-','by':'-'},
+                        {'ph':1,'bx':'-','by':'-'}                        
+                    ]},
+                    {'d':'ne','p':[
+                        {'bp':'ne','v':0},
+                        {'bp':'ne','v':1},
+                        {'bp':'ne','v':2},
+                        {'bp':'ne','v':3}                        
+                    ]}
+                    ],'dp':[]},
+                {'cp':[
+                    {'d':'nw','p':[
+                        {'bp':'nw','v':0},
+                        {'bp':'nw','v':1},
+                        {'bp':'nw','v':2},
+                        {'ph':5,'bx':'+','by':''}                        
+                    ]},
+                    {'d':'se','p':[
+                        {'bp':'se','v':3},
+                        {'bp':'se','v':2},
+                        {'bp':'se','v':1},
+                        {'ph':3,'bx':'-','by':'-'}                        
+                    ]}
+                    ],'dp':['ne']}                        
+            ],            
+            'ne,se':[
+                {'nh':'ne','cp':[
+                    {'d':'nw','p':[
+                        {'bp':'nw','v':3},
+                        {'bp':'nw','v':2},
+                        {'bp':'nw','v':1},
+                        {'ph':0,'bx':'+','by':'+'}                        
+                    ]},
+                    {'d':'se','p':[
+                        {'bp':'se','v':0},
+                        {'bp':'se','v':1},
+                        {'bp':'se','v':2},
+                        {'ph':2,'bx':'-','by':'-'}                        
+                    ]}
+                    ],'dp':['sw']},
+                {'nh':'se','cp':[
+                    {'d':'sw','p':[
+                        {'bp':'sw','v':3},
+                        {'bp':'sw','v':2},
+                        {'bp':'sw','v':1},
+                        {'ph':0,'bx':'+','by':'-'}                        
+                    ]},
+                    {'d':'ne','p':[
+                        {'bp':'ne','v':0},
+                        {'bp':'ne','v':1},
+                        {'bp':'ne','v':2},
+                        {'ph':4,'bx':'-','by':'-'}                        
+                    ]}
+                    ],'dp':['nw']},
+                {'cp':[
+                    {'d':'ne','p':[
+                        {'bp':'nw','v':3},
+                        {'bp':'nw','v':2},
+                        {'ph':4,'bx':'+','by':'+'},                        
+                        {'ph':4,'bx':'+','by':'+'}                        
+                    ]},
+                    {'d':'se','p':[
+                        {'bp':'se','v':3},
+                        {'bp':'se','v':2},
+                        {'ph':2,'bx':'+','by':'-'},                        
+                        {'ph':2,'bx':'+','by':'-'}                        
+                    ]}
+                    ],'dp':[]}                        
+            ]
+        };
 
         this.init = function () {
 
@@ -1050,58 +1134,12 @@ class cartoHexa {
             ne,se,s,sw,nw
             n,ne,se,s,sw,nw
             */
-            /*
-            pointsFusion = {
-                'n,ne':['nh':'n','cp':[{'d':'sw'}]]
-            }
-            */        
             case 'n,ne':
-                //modifie les voisins
-                h = neighbors.hexas['n'];
-                pHexa = h.layoutOut.polygonCorners(h.hex);
-                changePoints(h,'sw',neighbors.c,[
-                    bp.sw[0],                        
-                    bp.sw[1],                        
-                    bp.sw[2],                        
-                    [pHexa[2].x-h.center.x+h.wBord/2,h.center.y-pHexa[2].y]
-                ]);    
-                h.pointsBezier.delete('se0');
-                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
-
-                h = neighbors.hexas['ne'];
-                pHexa = h.layoutOut.polygonCorners(h.hex);
-                changePoints(h,'sw',neighbors.c,[
-                    bp.sw[3],                        
-                    bp.sw[2],                        
-                    [h.center.x-pHexa[1].x-h.wBord/2,h.center.y-pHexa[1].y-h.wBord/2],
-                    [h.center.x-pHexa[1].x-h.wBord/2,h.center.y-pHexa[1].y-h.wBord/2]
-                ]); 
-                changePoints(h,'ne',neighbors.c,[
-                    bp.ne[0],                        
-                    bp.ne[1],                        
-                    bp.ne[2],                        
-                    [hT.center.x-pHexa[4].x-hT.wBord/2,hT.center.y-pHexa[4].y]
-                ]);       
-                h.pointsBezier.delete('nw0');
-                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
-
-                //modifie la target
-                changePoints(hT,'nw',neighbors.c,[
-                    bp.nw[0],
-                    bp.nw[1],
-                    bp.nw[2],                                     
-                    [hT.center.x-pHexaT[5].x+hT.wBord/2,hT.center.y-pHexaT[5].y]
-                ]);    
-                changePoints(hT,'se',neighbors.c,[
-                    bp.se[3],
-                    bp.se[2],
-                    bp.se[1],
-                    [hT.center.x-pHexaT[3].x-hT.wBord/2,hT.center.y-pHexaT[3].y-hT.wBord/2]
-                ]);    
-                hT.pointsBezier.delete('ne0');
+                fusionPoints(hT,neighbors,pointsFusion['n,ne'],bp);
                 break;
             case 'ne,se':
-                //modifie les voisins
+                fusionPoints(hT,neighbors,pointsFusion['ne,se'],bp);
+                /*modifie les voisins
                 h = neighbors.hexas['ne'];
                 pHexa = h.layoutOut.polygonCorners(h.hex);
                 changePoints(h,'nw',neighbors.c,[
@@ -1149,7 +1187,8 @@ class cartoHexa {
                     bp.se[2],
                     [hT.center.x-pHexaT[2].x+hT.wBord/2,hT.center.y-pHexaT[2].y-hT.wBord/2],
                     [hT.center.x-pHexaT[2].x+hT.wBord/2,hT.center.y-pHexaT[2].y-hT.wBord/2]
-                ]);    
+                ]);
+                */    
                 break;
             case 'n':
                 //modifie le voisin
@@ -1478,16 +1517,46 @@ class cartoHexa {
 
     }
 
+    function fusionPoints(t,n,p,bp){
+        p.forEach(p=>{
+            let h = p.nh ? n.hexas[p.nh]:t,
+                pH = h.layoutOut.polygonCorners(h.hex);
+            p.cp.forEach(d=>{
+                let arr=[];
+                d.p.forEach(pt=>{
+                    if(pt.bp)
+                        arr.push(bp[pt.bp][pt.v])
+                    else{
+                        let x = h.center.x-pH[pt.ph].x,
+                        y = h.center.y-pH[pt.ph].y;
+                        x = pt.bx == '-' ? x-h.wBord/2 : pt.bx == '+' ? x+h.wBord/2 : x; 
+                        y = pt.by == '-' ? y-h.wBord/2 : pt.by == '+' ? y+h.wBord/2 : y; 
+                        arr.push([x,y]);
+                    }
+                })
+                changePoints(h,d.d,n.c,arr);
+            })
+            p.dp.forEach(d=>{
+                let k = getPointDir(d, h.pointsBezier);
+                h.pointsBezier.delete(k);
+            });
+            d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
+        });                
+    }
+
 
     function changePoints(h,d,n,p){
         if(h.pointsBezier.has(d+'0')){
-            //let k = getPointDir(d, h.pointsBezier);    
             h.pointsBezier.set(d+n,p);
             h.pointsBezier.delete(d+'0');    
         }else if(h.pointsBezier.has(d+'move')){
             //on ne chgange que les points ayant bougé ?
             h.pointsBezier.set(d+n,p);
             h.pointsBezier.delete(d+'move');    
+        }else{
+            let k = getPointDir(d, h.pointsBezier);    
+            h.pointsBezier.set(d+n,p);
+            h.pointsBezier.delete(k);    
         }
     }
 
