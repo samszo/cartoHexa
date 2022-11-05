@@ -47,6 +47,186 @@ class cartoHexa {
             'sw-resize':[{'d':'sw','p':1},{'d':'sw','p':2}]
             }
         , pointsFusion = {
+            'n':[
+                {'nh':'n','cp':[
+                    {'d':'se','p':[
+                        {'bp':'se','v':0},
+                        {'bp':'se','v':1},
+                        {'bp':'se','v':2},
+                        {'ph':1,'bx':'-','by':'-'}                        
+                    ]},
+                    {'d':'sw','p':[
+                        {'bp':'sw','v':0},
+                        {'bp':'sw','v':1},
+                        {'bp':'sw','v':2},
+                        {'ph':2,'bx':'+','by':'-'}                        
+                    ]}
+                    ],'dp':[]},
+                {'cp':[
+                    {'d':'ne','p':[
+                        {'bp':'ne','v':0},
+                        {'bp':'ne','v':1},
+                        {'bp':'ne','v':2},
+                        {'ph':4,'bx':'-','by':'-'}                        
+                    ]},
+                    {'d':'nw','p':[
+                        {'bp':'nw','v':0},
+                        {'bp':'nw','v':1},
+                        {'bp':'nw','v':2},
+                        {'ph':5,'bx':'+','by':'-'}                        
+                    ]}
+                    ],'dp':[]}                        
+            ],
+            'ne':[
+                {'nh':'n','cp':[
+                    {'d':'sw','p':[
+                        {'bp':'sw','v':3},
+                        {'bp':'sw','v':3},
+                        {'ph':2,'bx':'-','by':'-'},                        
+                        {'ph':2,'bx':'-','by':'-'}                        
+                    ]},
+                    {'d':'nw','p':[
+                        {'bp':'nw','v':3},
+                        {'bp':'nw','v':2},
+                        {'bp':'nw','v':1},
+                        {'ph':0,'bx':'+','by':'-'}                        
+                    ]}
+                    ],'dp':[]},
+                {'cp':[
+                    {'d':'ne','p':[
+                        {'bp':'ne','v':3},
+                        {'bp':'ne','v':2},
+                        {'ph':4,'bx':'+','by':'-'},                        
+                        {'ph':4,'bx':'+','by':'-'}                        
+                    ]},
+                    {'d':'se','p':[
+                        {'bp':'se','v':3},
+                        {'bp':'se','v':2},
+                        {'bp':'se','v':1},
+                        {'ph':3,'bx':'-','by':'-'}                        
+                    ]}
+                    ],'dp':[]}                        
+            ],
+            'nw':[
+                {'nh':'nw','cp':[
+                    {'d':'ne','p':[
+                        {'bp':'ne','v':3},
+                        {'bp':'ne','v':2},
+                        {'bp':'ne','v':1},
+                        {'ph':3,'bx':'-','by':'+'}                        
+                    ]},
+                    {'d':'se','p':[
+                        {'ph':2,'bx':'+','by':'-'},                        
+                        {'ph':2,'bx':'+','by':'-'},                       
+                        {'bp':'se','v':2},
+                        {'bp':'se','v':3}
+                    ]}
+                    ],'dp':[]},
+                {'cp':[
+                    {'d':'nw','p':[
+                        {'ph':5,'bx':'-','by':'+'},                        
+                        {'ph':5,'bx':'-','by':'+'},                        
+                        {'bp':'nw','v':2},
+                        {'bp':'nw','v':3},
+                    ]},
+                    {'d':'sw','p':[
+                        {'bp':'sw','v':3},
+                        {'bp':'sw','v':2},
+                        {'bp':'sw','v':1},
+                        {'ph':0,'bx':'+','by':'-'}                        
+                    ]}
+                    ],'dp':[]}                        
+            ],
+            's':[
+                {'nh':'s','cp':[
+                    {'d':'ne','p':[
+                        {'bp':'ne','v':0},
+                        {'bp':'ne','v':1},
+                        {'bp':'ne','v':2},
+                        {'ph':4,'bx':'-','by':''}                        
+                    ]},
+                    {'d':'nw','p':[
+                        {'bp':'nw','v':0},
+                        {'bp':'nw','v':1},
+                        {'bp':'nw','v':2},
+                        {'ph':5,'bx':'+','by':''}                        
+                    ]}
+                    ],'dp':[]},
+                {'cp':[
+                    {'d':'se','p':[
+                        {'bp':'se','v':0},
+                        {'bp':'se','v':1},
+                        {'bp':'se','v':2},
+                        {'ph':2,'bx':'-','by':''}                        
+                    ]},
+                    {'d':'sw','p':[
+                        {'bp':'sw','v':0},
+                        {'bp':'sw','v':1},
+                        {'bp':'sw','v':2},
+                        {'ph':1,'bx':'+','by':''}                        
+                    ]}
+                    ],'dp':[]}                        
+            ],
+            'se':[
+                {'nh':'se','cp':[
+                    {'d':'nw','p':[
+                        {'bp':'nw','v':3},
+                        {'bp':'nw','v':3},
+                        {'ph':5,'bx':'-','by':'+'},                        
+                        {'ph':5,'bx':'-','by':'+'}                        
+                    ]},
+                    {'d':'sw','p':[
+                        {'bp':'sw','v':3},
+                        {'bp':'sw','v':2},
+                        {'bp':'sw','v':1},
+                        {'ph':0,'bx':'+','by':'-'}                        
+                    ]}
+                    ],'dp':[]},
+                {'cp':[
+                    {'d':'se','p':[
+                        {'bp':'se','v':3},
+                        {'bp':'se','v':2},
+                        {'ph':2,'bx':'+','by':'-'},                        
+                        {'ph':2,'bx':'+','by':'-'}                        
+                    ]},
+                    {'d':'ne','p':[
+                        {'bp':'ne','v':3},
+                        {'bp':'ne','v':2},
+                        {'bp':'ne','v':1},
+                        {'ph':3,'bx':'-','by':'+'}                        
+                    ]}
+                    ],'dp':[]}                        
+            ],
+            'sw':[
+                {'nh':'sw','cp':[
+                    {'d':'ne','p':[
+                        {'bp':'ne','v':3},
+                        {'bp':'ne','v':3},
+                        {'ph':4,'bx':'+','by':'+'},                        
+                        {'ph':4,'bx':'+','by':'+'}                        
+                    ]},
+                    {'d':'se','p':[
+                        {'bp':'se','v':3},
+                        {'bp':'se','v':2},
+                        {'bp':'se','v':1},
+                        {'ph':3,'bx':'-','by':'-'}                        
+                    ]}
+                    ],'dp':[]},
+                {'cp':[
+                    {'d':'sw','p':[
+                        {'bp':'sw','v':3},
+                        {'bp':'sw','v':3},
+                        {'ph':1,'bx':'-','by':'-'},                        
+                        {'ph':1,'bx':'-','by':'-'}                        
+                    ]},
+                    {'d':'nw','p':[
+                        {'ph':0,'bx':'+','by':'+'},                        
+                        {'bp':'nw','v':1},
+                        {'bp':'nw','v':2},
+                        {'bp':'nw','v':3}
+                    ]}
+                    ],'dp':[]}                        
+            ],
             'n,ne':[
                 {'nh':'n','cp':[
                     {'d':'sw','p':[
@@ -1139,242 +1319,24 @@ class cartoHexa {
                 break;
             case 'ne,se':
                 fusionPoints(hT,neighbors,pointsFusion['ne,se'],bp);
-                /*modifie les voisins
-                h = neighbors.hexas['ne'];
-                pHexa = h.layoutOut.polygonCorners(h.hex);
-                changePoints(h,'nw',neighbors.c,[
-                    bp.nw[3],                        
-                    bp.nw[2],                        
-                    bp.nw[1],                        
-                    [h.center.x-pHexa[0].x+h.wBord/2,h.center.y-pHexa[0].y+h.wBord/2]
-                ]);
-                changePoints(h,'se',neighbors.c,[
-                    bp.se[0],                        
-                    bp.se[1],                        
-                    bp.se[2],                        
-                    [pHexa[1].x-h.center.x-h.wBord/2,h.center.y-pHexa[1].y]
-                ]);
-                k = getPointDir('sw', h.pointsBezier);    
-                h.pointsBezier.delete(k);
-                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
-
-                h = neighbors.hexas['se'];
-                pHexa = h.layoutOut.polygonCorners(h.hex);
-                changePoints(h,'sw',neighbors.c,[
-                    bp.sw[3],                        
-                    bp.sw[2],                        
-                    bp.sw[1],                        
-                    [pHexa[3].x-h.center.x+h.wBord/2,h.center.y-pHexa[3].y-h.wBord/2]
-                ]); 
-                changePoints(h,'ne',neighbors.c,[
-                    bp.ne[0],                        
-                    bp.ne[1],                        
-                    bp.ne[2],                        
-                    [h.center.x-pHexa[4].x-h.wBord/2,h.center.y-pHexa[4].y]
-                ]);       
-                k = getPointDir('nw', h.pointsBezier);    
-                h.pointsBezier.delete(k);
-                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
-                //modifie la target
-                changePoints(hT,'ne',neighbors.c,[
-                    bp.ne[3],
-                    bp.ne[2],
-                    [hT.center.x-pHexaT[4].x+hT.wBord/2,hT.center.y-pHexaT[4].y+hT.wBord/2],
-                    [hT.center.x-pHexaT[4].x+hT.wBord/2,hT.center.y-pHexaT[4].y+hT.wBord/2]
-                ]);    
-                changePoints(hT,'se',neighbors.c,[
-                    bp.se[3],
-                    bp.se[2],
-                    [hT.center.x-pHexaT[2].x+hT.wBord/2,hT.center.y-pHexaT[2].y-hT.wBord/2],
-                    [hT.center.x-pHexaT[2].x+hT.wBord/2,hT.center.y-pHexaT[2].y-hT.wBord/2]
-                ]);
-                */    
                 break;
             case 'n':
-                //modifie le voisin
-                h = neighbors.hexas['n'];
-                pHexa = h.layoutOut.polygonCorners(h.hex);
-                changePoints(h,'se',neighbors.c,[
-                    bp.se[0],                        
-                    bp.se[1],                        
-                    bp.se[2],                        
-                    [pHexa[1].x-h.center.x-h.wBord/2,h.center.y-pHexa[1].y]
-                ]);    
-                changePoints(h,'sw',neighbors.c,[
-                    bp.sw[0],                        
-                    bp.sw[1],                        
-                    bp.sw[2],                        
-                    [pHexa[2].x-h.center.x+h.wBord/2,h.center.y-pHexa[2].y-h.wBord/2]
-                ]);    
-                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
-                //modifie la target
-                changePoints(hT,'ne',neighbors.c,[
-                    bp.ne[0],                        
-                    bp.ne[1],                        
-                    bp.ne[2],                        
-                    [hT.center.x-pHexaT[4].x-hT.wBord/2,hT.center.y-pHexaT[4].y]
-                ]);    
-                changePoints(hT,'nw',neighbors.c,[
-                    bp.nw[0],
-                    bp.nw[1],
-                    bp.nw[2],                                     
-                    [hT.center.x-pHexaT[5].x+hT.wBord/2,hT.center.y-pHexaT[5].y]
-                ]);    
+                fusionPoints(hT,neighbors,pointsFusion['n'],bp);
                 break;
             case 'ne':
-                //modifie le voisin
-                h = neighbors.hexas['ne'];
-                pHexa = h.layoutOut.polygonCorners(h.hex);
-                changePoints(h,'sw',neighbors.c,[
-                        bp.sw[3],
-                        bp.sw[3],
-                        [pHexa[2].x-h.center.x-h.wBord/2,h.center.y-pHexa[2].y-h.wBord/2],
-                        [pHexa[2].x-h.center.x-h.wBord/2,h.center.y-pHexa[2].y-h.wBord/2]
-                    ]);
-                changePoints(h,'nw',neighbors.c,[
-                        bp.nw[3],
-                        bp.nw[2],
-                        bp.nw[1],
-                        [h.center.x-pHexa[0].x+h.wBord/2,h.center.y-pHexa[0].y+hT.wBord/2]
-                    ]);
-                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
-                //modifie la target
-                changePoints(hT,'ne',neighbors.c,[
-                    bp.ne[3],                        
-                    bp.ne[2],                        
-                    [hT.center.x-pHexaT[4].x+hT.wBord/2,hT.center.y-pHexaT[4].y+hT.wBord/2],
-                    [hT.center.x-pHexaT[4].x+hT.wBord/2,hT.center.y-pHexaT[4].y+hT.wBord/2]
-                ]);    
-                changePoints(hT,'se',neighbors.c,[
-                    bp.se[3],
-                    bp.se[2],
-                    bp.se[1],
-                    [hT.center.x-pHexaT[3].x-hT.wBord/2,hT.center.y-pHexaT[3].y-hT.wBord/2]
-                ]);    
+                fusionPoints(hT,neighbors,pointsFusion['ne'],bp);
                 break;
             case 'se':
-                    //modifie le voisin
-                    h = neighbors.hexas['se'];
-                    pHexa = h.layoutOut.polygonCorners(h.hex);
-                    changePoints(h,'nw',neighbors.c,[
-                        bp.nw[3],
-                        bp.nw[2],
-                        [pHexa[4].x-h.center.x-h.wBord/2,h.center.y-pHexa[4].y+h.wBord/2],
-                        [pHexa[4].x-h.center.x-h.wBord/2,h.center.y-pHexa[4].y+h.wBord/2]
-                    ]);
-                    changePoints(h,'sw',neighbors.c,[
-                        bp.sw[3],
-                        bp.sw[2],
-                        bp.sw[1],
-                        [h.center.x-pHexa[0].x+h.wBord/2,h.center.y-pHexa[0].y-hT.wBord/2]
-                    ]);
-                    d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
-                    //modifie la target
-                    changePoints(hT,'se',neighbors.c,[
-                        bp.se[3],                        
-                        bp.se[2],                        
-                        [hT.center.x-pHexaT[2].x+hT.wBord/2,hT.center.y-pHexaT[2].y-hT.wBord/2],
-                        [hT.center.x-pHexaT[2].x+hT.wBord/2,hT.center.y-pHexaT[2].y-hT.wBord/2]
-                    ]);    
-                    changePoints(hT,'ne',neighbors.c,[
-                        bp.ne[3],
-                        bp.ne[2],
-                        bp.ne[1],
-                        [hT.center.x-pHexaT[3].x-hT.wBord/2,hT.center.y-pHexaT[3].y+hT.wBord/2]
-                    ]);    
-                    break;
+                fusionPoints(hT,neighbors,pointsFusion['se'],bp);
+                break;
             case 's':
-                //modifie le voisin
-                h = neighbors.hexas['s'];
-                pHexa = h.layoutOut.polygonCorners(h.hex);
-                changePoints(h,'ne',neighbors.c,[
-                    bp.ne[0],                        
-                    bp.ne[1],                        
-                    bp.ne[2],                        
-                    [pHexa[5].x-h.center.x-h.wBord/2,h.center.y-pHexa[5].y]
-                ]);    
-                changePoints(h,'nw',neighbors.c,[
-                    bp.nw[0],                        
-                    bp.nw[1],                        
-                    bp.nw[2],                        
-                    [pHexa[4].x-h.center.x+h.wBord/2,h.center.y-pHexa[4].y]
-                ]);    
-                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                    
-                //modifie la target
-                changePoints(hT,'se',neighbors.c,[
-                    bp.se[0],                        
-                    bp.se[1],                        
-                    bp.se[2],                        
-                    [hT.center.x-pHexaT[2].x-hT.wBord/2,hT.center.y-pHexaT[2].y]
-                ]);    
-                changePoints(hT,'sw',neighbors.c,[
-                    bp.sw[0],
-                    bp.sw[1],
-                    bp.sw[2],                                     
-                    [hT.center.x-pHexaT[1].x+hT.wBord/2,hT.center.y-pHexaT[1].y]
-                ]);    
+                fusionPoints(hT,neighbors,pointsFusion['s'],bp);
                 break;
             case 'sw':
-                //modifie le voisin
-                h = neighbors.hexas['sw'];
-                pHexa = h.layoutOut.polygonCorners(h.hex);
-                changePoints(h,'ne',neighbors.c,[
-                    bp.ne[3],
-                    bp.ne[3],
-                    [pHexa[5].x-h.center.x+h.wBord/2,h.center.y-pHexa[5].y+h.wBord/2],
-                    [pHexa[5].x-h.center.x+h.wBord/2,h.center.y-pHexa[5].y+h.wBord/2]
-                ])
-                changePoints(h,'se',neighbors.c,[
-                    bp.se[3],
-                    bp.se[2],
-                    bp.se[1],
-                    [h.center.x-pHexa[3].x-h.wBord/2,h.center.y-pHexa[3].y-hT.wBord/2]
-                ]);
-                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                                                
-                //modifie la target
-                changePoints(hT,'sw',neighbors.c,[
-                    bp.sw[3],                        
-                    bp.sw[3],                        
-                    [hT.center.x-pHexaT[1].x-hT.wBord/2,hT.center.y-pHexaT[1].y-hT.wBord/2],
-                    [hT.center.x-pHexaT[1].x-hT.wBord/2,hT.center.y-pHexaT[1].y-hT.wBord/2]
-                ]);    
-                changePoints(hT,'nw',neighbors.c,[
-                    [hT.center.x-pHexaT[0].x+hT.wBord/2,hT.center.y-pHexaT[0].y+hT.wBord/2],
-                    bp.nw[1],                        
-                    bp.nw[2],                        
-                    bp.nw[3]                        
-                ]);    
+                fusionPoints(hT,neighbors,pointsFusion['sw'],bp);
             break;
             case 'nw':
-                //modifie le voisin
-                h = neighbors.hexas['nw'];
-                pHexa = h.layoutOut.polygonCorners(h.hex);
-                changePoints(h,'ne',neighbors.c,[
-                    bp.ne[3],
-                    bp.ne[2],
-                    bp.ne[1],
-                    [pHexa[0].x-h.center.x-h.wBord/2,h.center.y-pHexa[0].y+h.wBord/2]
-                ]);
-                changePoints(h,'se',neighbors.c,[
-                    [h.center.x-pHexa[2].x+h.wBord/2,h.center.y-pHexa[2].y-hT.wBord/2],
-                    [h.center.x-pHexa[2].x+h.wBord/2,h.center.y-pHexa[2].y-hT.wBord/2],
-                    bp.se[2],
-                    bp.se[3]
-                ]);
-                d3.select('#'+h.id+'_bord').attr('d',svgBezierOvalRedim(h));                                                                                
-                //modifie la target
-                changePoints(hT,'nw',neighbors.c,[
-                    [hT.center.x-pHexaT[5].x-hT.wBord/2,hT.center.y-pHexaT[5].y+hT.wBord/2],
-                    [hT.center.x-pHexaT[5].x-hT.wBord/2,hT.center.y-pHexaT[5].y+hT.wBord/2],
-                    bp.nw[2],                        
-                    bp.nw[3],                        
-                ]);    
-                changePoints(hT,'sw',neighbors.c,[
-                    bp.sw[3],                        
-                    bp.sw[2],                        
-                    bp.sw[1],                        
-                    [hT.center.x-pHexaT[0].x+hT.wBord/2,hT.center.y-pHexaT[0].y-hT.wBord/2]
-                ]);    
+                fusionPoints(hT,neighbors,pointsFusion['nw'],bp);
             break;
             default:
                 console.log('combinaison non gérée : '+neighbors.c);
