@@ -26,11 +26,16 @@
 </body>
 <script>
     //récupère les data
-    let urlData = 'http://localhost/samszo/omk/s/cartoaffect/page/ajax?json=1&helper=CartoHexa&action=getAllConcept&minVal=100&maxVal=200',
+    /*let urlData = 'http://localhost/samszo/omk/s/cartoaffect/page/ajax?json=1&helper=CartoHexa&action=getAllConcept&minVal=100&maxVal=200',
     urlDetails = "http://localhost/samszo/omk/s/cartoaffect/page/ajax?json=1&helper=ResourceNetworks&id=",
     urlCooccurrence = "http://localhost/samszo/omk/s/cartoaffect/page/ajax?json=1&helper=SQL&action=cooccurrenceValueResource&id=",
     urlItems = "http://localhost/samszo/omk/s/cartoaffect/page/ajax?json=1&helper=items",
-    urlItemDetails = "http://localhost/samszo/omk/s/fiches/item/",
+    urlItemDetails = "http://localhost/samszo/omk/s/fiches/item/",*/
+    let urlData = 'https://samszo.univ-paris8.fr/omk/s/cartoaffect/page/ajax?json=1&helper=CartoHexa&action=getAllConcept&minVal=100&maxVal=200',
+    urlDetails = "https://samszo.univ-paris8.fr/omk/s/cartoaffect/page/ajax?json=1&helper=ResourceNetworks&id=",
+    urlCooccurrence = "https://samszo.univ-paris8.fr/omk/s/cartoaffect/page/ajax?json=1&helper=SQL&action=cooccurrenceValueResource&id=",
+    urlItems = "https://samszo.univ-paris8.fr/omk/s/cartoaffect/page/ajax?json=1&helper=items",
+    urlItemDetails = "https://samszo.univ-paris8.fr/omk/s/fiches/item/",
     carte = new cartoHexa({'idCont':'ec'
         ,'urlData':urlData,'urlDetails':urlDetails,'urlCooccurrence':urlCooccurrence
         ,'urlItems':urlItems,'urlItemDetails':urlItemDetails
