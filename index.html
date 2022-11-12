@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CartoHexa</title>
     <script src="asset/js/d3.min.js"></script>
-    <script src="asset/js/cartoHexa.js"></script>
     <script src="asset/js/hex-lib.js"></script>
     <script src="asset/js/hex-algorithms.js"></script>
     <style type="text/css">
@@ -24,8 +23,10 @@
 <body>
         <div id="ec" ></div>
 </body>
-<script>
+<script type="module">
     const urlParams = new URLSearchParams(window.location.search);
+    import carto from './asset/js/cartoHexa.js';
+    import * as points from './asset/js/cartoPoints.js';
 
     //récupère les data
     let urlData = 'http://localhost/samszo/omk/s/cartoaffect/page/ajax?json=1&helper=CartoHexa&action=getAllConcept'
@@ -42,9 +43,10 @@
     urlItems = "https://samszo.univ-paris8.fr/omk/s/cartoaffect/page/ajax?json=1&helper=items",
     urlItemDetails = "https://samszo.univ-paris8.fr/omk/s/fiches/item/",
     */
-    carte = new cartoHexa({'idCont':'ec'
+    carte = new carto.cartoHexa({'idCont':'ec'
         ,'urlData':urlData,'urlDetails':urlDetails,'urlCooccurrence':urlCooccurrence
         ,'urlItems':urlItems,'urlItemDetails':urlItemDetails
+        ,'cp':points
     });
 
 </script>
