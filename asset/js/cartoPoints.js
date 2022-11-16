@@ -8,22 +8,23 @@ export let hexaMove = {
     'se-resize':[{'d':'se','p':1},{'d':'se','p':2}],
     'sw-resize':[{'d':'sw','p':1},{'d':'sw','p':2}]
     },
+    hexaLiaison = {
+        'se':{'d':'se','p':[
+            {'bp':'se','v':0},
+            {'bp':'se','v':1},
+            {'bp':'se','v':2},
+            {'ph':2,'bx':'-','by':'+'}                        
+        ]},
+        'sw':{'d':'sw','p':[
+            {'bp':'sw','v':0},
+            {'bp':'sw','v':1},
+            {'bp':'sw','v':2},
+            {'ph':1,'bx':'+','by':'+'}                        
+        ]}
+        },    
     hexaFusion = {
     'n':[
-        {'nh':'n','cp':[
-            {'d':'se','p':[
-                {'bp':'se','v':0},
-                {'bp':'se','v':1},
-                {'bp':'se','v':2},
-                {'ph':2,'bx':'-','by':'+'}                        
-            ]},
-            {'d':'sw','p':[
-                {'bp':'sw','v':0},
-                {'bp':'sw','v':1},
-                {'bp':'sw','v':2},
-                {'ph':1,'bx':'+','by':'+'}                        
-            ]}
-            ],'dp':[]},
+        {'nh':'n','cp':['getPointsLiaison_se','getPointsLiaison_sw'],'dp':[]},
         {'cp':[
             {'d':'ne','p':[
                 {'bp':'ne','v':0},
@@ -71,7 +72,7 @@ export let hexaMove = {
     ],
     'nw':[
         {'nh':'nw','cp':[
-            {'d':'ne','ifnot':['nen'],'p':[
+            {'d':'ne','p':[
                 {'bp':'ne','v':3},
                 {'bp':'ne','v':2},
                 {'bp':'ne','v':1},
@@ -285,7 +286,7 @@ export let hexaMove = {
         {'cp':['getPointsFusion_sw_sw_ne','getPointsFusion_ne_ne_sw'],'dp':[]}
     ],
     'n,s':[
-        {'cp':['getPointsFusion_n_n_se','getPointsFusion_n_n_sw','getPointsFusion_s_s_nw','getPointsFusion_s_s_ne'],'dp':[]}
+        {'cp':['getPointsLiaison_se','getPointsLiaison_sw','getPointsFusion_s_s_nw','getPointsFusion_s_s_ne'],'dp':[]}
     ],
     'se,nw':[
         {'cp':['getPointsFusion_se_se_nw','getPointsFusion_se_se_sw','getPointsFusion_nw_nw_ne','getPointsFusion_nw_nw_se'],'dp':[]}
@@ -294,6 +295,7 @@ export let hexaMove = {
         {'cp':['getPointsFusion_se_se_nw','getPointsFusion_se_se_sw','getPointsFusion_sw_sw_ne','getPointsFusion_sw_sw_se'],'dp':[]}
     ],
     's,sw':[
+        {'nh':'sw','cp':['getPointsFusion_nw_nw_se'],'dp':['ne']},
         {'cp':['getPointsFusion_n_n_se','getPointsFusion_ne_ne_nw'],'dp':['sw']}
     ],
     'se,s':[
@@ -301,14 +303,32 @@ export let hexaMove = {
         {'cp':['getPointsFusion_n_n_sw'],'dp':['se']}
     ],
     'se,sw':[
-        //{'nh':'s','cp':['getPointsFusion_s_s_nw'],'dp':['ne']},
         {'cp':['getPointsFusion_nw_nw_se','getPointsFusion_nw_nw_ne','getPointsFusion_ne_ne_sw','getPointsFusion_ne_ne_nw'],'dp':[]}
     ],
-    
-                        
+    'se,s,nw':[
+        {'cp':['getPointsFusion_n_n_se'],'dp':['se']}
+    ],
+    's,nw':[
+        {'cp':['getPointsFusion_se_se_nw','getPointsFusion_n_n_sw','getPointsFusion_n_n_se'],'dp':[]}
+    ],        
+    'n,ne,s':[
+        {'cp':['getPointsFusion_se_se_nw','getPointsFusion_n_n_sw','getPointsFusion_n_n_se'],'dp':[]}
+    ],
+    'se,s,sw':[
+        {'cp':[],'dp':['sw','se']}
+    ],
+    'n,sw,nw':[
+        {'nh':'sw','cp':['getPointsFusion_sw_sw_ne'],'dp':[]},
+        {'cp':['getPointsFusion_s_s_ne','getPointsFusion_ne_ne_sw'],'dp':['nw']}
+    ],                        
 };
 export function getPointsFusion(k,nh,d){
     let dp = hexaFusion[k].filter(f=>f.nh==nh)[0].cp.filter(cp=>cp.d==d)[0];
     if(!dp)console.log('points introuvable : '+k+','+nh+','+d);
+    return dp;
+}
+export function getPointsLiaison(d){
+    let dp = hexaLiaison[d];
+    if(!dp)console.log('points de liaison introuvable : '+d);
     return dp;
 }

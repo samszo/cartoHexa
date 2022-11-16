@@ -973,9 +973,11 @@ class cartoHexa {
                 pH = h.layoutOut.polygonCorners(h.hex);
             p.cp.forEach(d=>{
                 let arr=[], dp;
-                if(typeof d !== 'object' && d.substring(0,15)=='getPointsFusion'){
+                if(typeof d !== 'object' && d.substring(0,9)=='getPoints'){
                     let params = d.split('_');
-                    dp = me.cp.getPointsFusion(params[1],params[2],params[3]);
+                    dp = params[0]=='getPointsLiaison' ?
+                        me.cp.getPointsLiaison(params[1])
+                        : me.cp.getPointsFusion(params[1],params[2],params[3]);
                 }else dp = d;
                 dp.p.forEach(pt=>{
                     if(pt.bp)
