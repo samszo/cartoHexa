@@ -845,7 +845,7 @@ class cartoHexa {
         if(hp.hexSource){
             forme = svg.select('#'+hp.hexSource.id).select('.formeSpe.depth'+ (e ?  hp.depth+1 : hp.depth));
             //fussionne les deux courbes
-            let fusion = svgBezierFusion(hp.hexSource, hp)
+            let fusion = fusionNeighbors(hp.hexSource, hp)
             //ajoute l'intérieur au nouveau hexa
             s.selectAll('circle').data([hp]).enter().append('g')
                 .attr('class',h=>'formeSpe depth'+ (e ?  h.depth+1 : h.depth))     
@@ -933,40 +933,20 @@ class cartoHexa {
         return forme;
     }
 
-    function svgBezierFusion(hS, hT){
-        /*calcul la liaison entre deux hexagones
-        //ordre des beziers
-            'nw':,
-            'ne':,
-            'sw':,
-            'se':
-        //ordre des corners de l'hexa change suivant la position de l"hexa
-        //définition d'un segment
-            p.moveTo(...points[0]);
-            p.bezierCurveTo(...points[1],...points[2],...points[3]);
-        */      
-        //calcule l'angle entre les deux hexa
-        //angleDir = getAngleCursor([hS.center.x,hS.center.y],[hT.center.x, hT.center.y]),
-        /*
-        calcule les portions du bord régulier
-        pour remplacer ceux modifier par le drag
-        */
-        let bp={
+
+    function fusionNeighbors(hS, hT){
+
+        let d, n, bp={
             'se':svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, -hS.rBord),
             'sw':svgBezierOvalQuarter(hS.centerX, hS.centerY, hS.rBord, -hS.rBord),
             'ne':svgBezierOvalQuarter(hS.centerX, hS.centerY, -hS.rBord, hS.rBord),
             'nw':svgBezierOvalQuarter(hS.centerX, hS.centerY, hS.rBord, hS.rBord)
-        }
-        , pHexaT = hT.layoutOut.polygonCorners(hT.hex)
-        , h, pHexa
-        , xRela, yRela, neighbors={"c":"","hexas":{}}, d, n, k;
-
+        },neighbors={"c":"","hexas":{}};                
 
         //calcule les beziers du nouvelle hexa
         svgBezierCircle(hT);
 
-        //ATTENTION chaque hexa a ces propres bords
-        /* on recherche tous voisins présents        
+        /* on recherche les voisins du nouveau hexa        
         */
         for (const g in hexGeoDir) {
             d=hexGeoDir[g];
@@ -981,12 +961,10 @@ class cartoHexa {
         neighbors.c = neighbors.c.substring(0,neighbors.c.length-1);
         console.log(neighbors.c);
         //modification des points suivant la combinaison des voisins
-        //ATTENTION l'odre des points est important pour le drag des bords
         if(me.cp.hexaFusion[neighbors.c])
             fusionPoints(hT,neighbors,me.cp.hexaFusion[neighbors.c],bp);
         else
             console.log('combinaison non gérée : '+neighbors.c);
-
     }
 
     function fusionPoints(t,n,p,bp){
@@ -1006,7 +984,7 @@ class cartoHexa {
                         arr.push(getFusionCoor(h,pH,pt));
                     }
                 })
-                changePoints(h,dp.d,n.c,arr);
+                changePoints(h,dp,n.c,arr);
             })
             p.dp.forEach(d=>{
                 let k = getPointDir(d, h.pointsBezier);
@@ -1024,19 +1002,24 @@ class cartoHexa {
         return [x,y]; 
     }
 
-    function changePoints(h,d,n,p){
-        if(h.pointsBezier.has(d+'0')){
-            h.pointsBezier.set(d+n,p);
-            h.pointsBezier.delete(d+'0');    
-        }else if(h.pointsBezier.has(d+'move')){
+    function changePoints(h,dp,n,p){
+        if(h.pointsBezier.has(dp.d+'0')){
+            h.pointsBezier.set(dp.d+n,p);
+            h.pointsBezier.delete(dp.d+'0');    
+        }else if(h.pointsBezier.has(dp.d+'move')){
             //on ne chgange que les points ayant bougé ?
-            h.pointsBezier.set(d+n,p);
-            h.pointsBezier.delete(d+'move');    
-        }else{
-            let k = getPointDir(d, h.pointsBezier);    
-            h.pointsBezier.set(d+n,p);
-            h.pointsBezier.delete(k);    
-        }
+            h.pointsBezier.set(dp.d+n,p);
+            h.pointsBezier.delete(dp.d+'move');    
+        }/*else{
+            let k = getPointDir(dp.d, h.pointsBezier);
+            if(dp.ifnot && !dp.ifnot.includes(k)){
+                h.pointsBezier.set(dp.d+n,p);
+                h.pointsBezier.delete(k);        
+            }else if(!dp.ifnot){
+                h.pointsBezier.set(dp.d+n,p);
+                h.pointsBezier.delete(k);        
+            }    
+        }*/
     }
 
     function getCombinations(valuesArray)
@@ -1294,9 +1277,11 @@ class cartoHexa {
             newHexa.hexNumLigne = i;
             newHexa.hexFinLigne = i==line.length-1 ? true : false;
             //newHexa.bord=false;
-            //calcul les beziers de la source et de la destination
-            svgBezierFusion(i==1 ? h : prevHexa, newHexa); 
+            //calcul les beziers de la source vers la destination
+            fusionNeighbors(i==1 ? h : prevHexa, newHexa);
             h.r.hexas.push(newHexa);
+            //calcul les beziers de la destination vers la source
+            fusionNeighbors(newHexa, i==1 ? h : prevHexa);
             prevHexa = newHexa;
         }
         //met à jour l'espace avec les nouveaux hexa

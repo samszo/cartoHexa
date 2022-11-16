@@ -1,5 +1,5 @@
 export let hexaMove = {
-        'n-resize':[{'d':'ne','p':3},{'d':'nw','p':3}],                
+    'n-resize':[{'d':'ne','p':3},{'d':'nw','p':3}],                
     'e-resize':[{'d':'ne','p':0},{'d':'se','p':0}],
     's-resize':[{'d':'se','p':3},{'d':'sw','p':3}],
     'w-resize':[{'d':'nw','p':0},{'d':'sw','p':0}],
@@ -40,26 +40,26 @@ export let hexaMove = {
             ],'dp':[]}                        
     ],
     'ne':[
-        {'nh':'n','cp':[
+        {'nh':'ne','cp':[
             {'d':'sw','p':[
                 {'bp':'sw','v':3},
                 {'bp':'sw','v':3},
-                {'ph':2,'bx':'-','by':'-'},                        
-                {'ph':2,'bx':'-','by':'-'}                        
+                {'ph':1,'bx':'-','by':'-'},                        
+                {'ph':1,'bx':'-','by':'-'}                        
             ]},
-            {'d':'nw','p':[
+            {'d':'nw','ifnot':['nwn'],'p':[
                 {'bp':'nw','v':3},
                 {'bp':'nw','v':2},
                 {'bp':'nw','v':1},
-                {'ph':0,'bx':'+','by':'-'}                        
+                {'ph':0,'bx':'+','by':'+'}                        
             ]}
             ],'dp':[]},
         {'cp':[
             {'d':'ne','p':[
                 {'bp':'ne','v':3},
                 {'bp':'ne','v':2},
-                {'ph':4,'bx':'+','by':'-'},                        
-                {'ph':4,'bx':'+','by':'-'}                        
+                {'ph':4,'bx':'+','by':'+'},                        
+                {'ph':4,'bx':'+','by':'+'}                        
             ]},
             {'d':'se','p':[
                 {'bp':'se','v':3},
@@ -71,7 +71,7 @@ export let hexaMove = {
     ],
     'nw':[
         {'nh':'nw','cp':[
-            {'d':'ne','p':[
+            {'d':'ne','ifnot':['nen'],'p':[
                 {'bp':'ne','v':3},
                 {'bp':'ne','v':2},
                 {'bp':'ne','v':1},
@@ -160,7 +160,7 @@ export let hexaMove = {
             ],'dp':[]}                        
     ],
     'sw':[
-        {'nh':'sw','cp':[
+        {'nh':'sw','ifnot':['nse'],'cp':[
             {'d':'ne','p':[
                 {'bp':'ne','v':3},
                 {'bp':'ne','v':3},
@@ -275,9 +275,19 @@ export let hexaMove = {
                 {'ph':2,'bx':'+','by':'-'}                        
             ]}
             ],'dp':[]}                        
-    ]
+    ],
+    'sw,nw':[
+        {'nh':'sw','cp':['getPointsFusion_sw_sw_ne'],'dp':['ne']},
+        {'nh':'nw','cp':['getPointsFusion_nw_nw_se','getPointsFusion_nw_nw_se'],'dp':[]},
+        {'cp':['getPointsFusion_se_se_nw','getPointsFusion_ne_ne_sw'],'dp':[]}                        
+    ],            
+    'ne,sw':[
+        {'cp':['getPointsFusion_sw_sw_ne'],'dp':[]},
+        {'cp':['getPointsFusion_ne_ne_sw'],'dp':[]}
+    ],                
 };
 export function getPointsFusion(k,nh,d){
     let dp = hexaFusion[k].filter(f=>f.nh==nh)[0].cp.filter(cp=>cp.d==d)[0];
+    if(!dp)console.log('points introuvable : '+k+','+nh+','+d);
     return dp;
 }
