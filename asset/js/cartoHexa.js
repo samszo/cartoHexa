@@ -27,7 +27,7 @@ class cartoHexa {
         this.eventDetailsCooccurrence = params.eventDetailsCooccurrence ? params.eventDetailsCooccurrence : 'click';
         this.cp = params.cp;
         var layoutBase, rectCarto, padding = 0, width, height, legende,
-        svg, rectBase, container, hierarchie, defText="vide", allHexa=[], takenHexa=[], color, defColor='black'
+        svg, rectBase, container, hierarchie, defText="vide", allHexa=[], takenHexa=[], color, defColor='#102040'
         , patience, defValSelect, valueExtent, resourceClass=false
         , onDrag=false, onZoom=false, onAdd=false, onRedim = false
         , subShapeDetail=2
