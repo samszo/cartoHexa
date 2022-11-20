@@ -90,7 +90,7 @@ export let hexaMove = {
         {'cp':['getPointsLiaison_swH'],'dp':[]}                        
     ],
     'n,ne':[
-        {'nh':'n','cp':['getPointsLiaison_swV'],'dp':['se']},
+        {'nh':'n','cp':['getPointsLiaison_swV'],'dp':[]},
         {'nh':'ne','cp':['getPointsLiaison_nwH'],'dp':[]},
         {'cp':['getPointsLiaison_nwV'],'dp':['ne']}                        
     ],            
@@ -161,7 +161,7 @@ export let hexaMove = {
         {'cp':['getPointsFusion_se_se_nw','getPointsFusion_se_se_sw','getPointsFusion_sw_sw_ne','getPointsFusion_sw_sw_se'],'dp':[]}
     ],
     's,sw':[
-        {'nh':'sw','cp':['getPointsLiaison_seO'],'dp':[]},
+        {'nh':'sw','cp':['getPointsLiaison_seH'],'dp':[]},
         {'cp':['getPointsLiaison_seV'],'dp':['sw']}
     ],
     'se,s':[
@@ -181,11 +181,33 @@ export let hexaMove = {
         {'cp':['getPointsFusion_se_se_nw','getPointsFusion_n_n_sw','getPointsFusion_n_n_se'],'dp':[]}
     ],
     'se,s,sw':[
+        {'nh':'s','cp':[],'dp':['ne']},
         {'cp':[],'dp':['sw','se']}
     ],
     'n,sw,nw':[
-        {'nh':'sw','cp':['getPointsFusion_sw_sw_ne'],'dp':[]},
-        {'cp':['getPointsFusion_s_s_ne','getPointsLiaison_swH'],'dp':['nw']}
+        {'nh':'n','cp':['getPointsLiaison_seV'],'dp':['sw']},
+        {'nh':'sw','cp':[],'dp':['nw']},
+        {'nh':'nw','cp':['getPointsLiaison_neH'],'dp':['se']},
+        {'cp':['getPointsLiaison_swH','getPointsLiaison_neV'],'dp':['nw']}
+    ],                        
+    'n,ne,nw':[
+        {'nh':'n','cp':[],'dp':['se']},
+        {'cp':[],'dp':['nw','ne']}
+    ],                        
+    'sw,sw,ne':[
+        {'nh':'sw','cp':['getPointsLiaison_neH'],'dp':['se']},
+        {'nh':'s','cp':['getPointsLiaison_neV'],'dp':[]},
+        {'cp':['getPointsLiaison_seV'],'dp':['sw']}
+    ],
+    'n,ne,se,s,sw':[
+        {'nh':'ne','cp':['getPointsLiaison_nwH'],'dp':[]},
+        {'cp':['getPointsLiaison_nwV'],'dp':['ne','se','sw']}
+    ],
+    'n,se,s':[
+        {'cp':['getPointsLiaison_nwV','getPointsLiaison_swV','getPointsLiaison_neV'],'dp':['se']}
+    ],
+    'n,ne,s,nw':[
+        {'cp':['getPointsLiaison_swV','getPointsLiaison_seV'],'dp':['nw','ne']}
     ],                        
 };
 export function getPointsFusion(k,nh,d){

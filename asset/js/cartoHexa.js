@@ -1012,16 +1012,11 @@ class cartoHexa {
             //on ne chgange que les points ayant bougé ?
             h.pointsBezier.set(dp.d+n,p);
             h.pointsBezier.delete(dp.d+'move');    
-        }/*else{
+        }else{
             let k = getPointDir(dp.d, h.pointsBezier);
-            if(dp.ifnot && !dp.ifnot.includes(k)){
-                h.pointsBezier.set(dp.d+n,p);
-                h.pointsBezier.delete(k);        
-            }else if(!dp.ifnot){
-                h.pointsBezier.set(dp.d+n,p);
-                h.pointsBezier.delete(k);        
-            }    
-        }*/
+            h.pointsBezier.set(dp.d+n,p);
+            h.pointsBezier.delete(k);        
+        }
     }
 
     function getCombinations(valuesArray)
