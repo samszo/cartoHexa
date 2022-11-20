@@ -9,229 +9,95 @@ export let hexaMove = {
     'sw-resize':[{'d':'sw','p':1},{'d':'sw','p':2}]
     },
     hexaLiaison = {
-        'se':{'d':'se','p':[
+        'seV':{'d':'se','p':[
             {'bp':'se','v':0},
             {'bp':'se','v':1},
             {'bp':'se','v':2},
             {'ph':2,'bx':'-','by':'+'}                        
         ]},
-        'sw':{'d':'sw','p':[
+        'seO':{'d':'se','p':[
+            {'bp':'se','v':3},
+            {'bp':'se','v':2},
+            {'bp':'se','v':1},
+            {'ph':3,'bx':'-','by':'-'}                        
+        ]},
+        'seH':{'d':'se','p':[
+            {'bp':'se','v':3},
+            {'bp':'se','v':2},
+            {'ph':2,'bx':'+','by':'-'},                        
+            {'ph':2,'bx':'+','by':'-'}                        
+        ]},
+        'swV':{'d':'sw','p':[
             {'bp':'sw','v':0},
             {'bp':'sw','v':1},
             {'bp':'sw','v':2},
             {'ph':1,'bx':'+','by':'+'}                        
+        ]},
+        'swH':{'d':'sw','p':[
+            {'bp':'sw','v':3},
+            {'bp':'sw','v':3},
+            {'ph':1,'bx':'-','by':'-'},                        
+            {'ph':1,'bx':'-','by':'-'}                        
+        ]},
+        'neV':{'d':'ne','p':[
+            {'bp':'ne','v':0},
+            {'bp':'ne','v':1},
+            {'bp':'ne','v':2},
+            {'ph':4,'bx':'-','by':'+'}                        
+        ]},
+        'neH':{'d':'ne','p':[
+            {'bp':'ne','v':3},
+            {'bp':'ne','v':2},
+            {'ph':4,'bx':'+','by':'+'},                        
+            {'ph':4,'bx':'+','by':'+'}                        
+        ]},
+        'nwV':{'d':'nw','p':[
+            {'bp':'nw','v':0},
+            {'bp':'nw','v':1},
+            {'bp':'nw','v':2},
+            {'ph':5,'bx':'+','by':'+'}                        
+        ]},
+        'nwH':{'d':'nw','p':[
+            {'ph':5,'bx':'-','by':'+'},                        
+            {'ph':5,'bx':'-','by':'+'},                        
+            {'bp':'nw','v':2},
+            {'bp':'nw','v':3},
         ]}
         },    
     hexaFusion = {
     'n':[
-        {'nh':'n','cp':['getPointsLiaison_se','getPointsLiaison_sw'],'dp':[]},
-        {'cp':[
-            {'d':'ne','p':[
-                {'bp':'ne','v':0},
-                {'bp':'ne','v':1},
-                {'bp':'ne','v':2},
-                {'ph':4,'bx':'-','by':'+'}                        
-            ]},
-            {'d':'nw','p':[
-                {'bp':'nw','v':0},
-                {'bp':'nw','v':1},
-                {'bp':'nw','v':2},
-                {'ph':5,'bx':'+','by':'+'}                        
-            ]}
-            ],'dp':[]}                        
+        {'nh':'n','cp':['getPointsLiaison_seV','getPointsLiaison_swV'],'dp':[]},
+        {'cp':['getPointsLiaison_neV','getPointsLiaison_nwV'],'dp':[]}
     ],
     'ne':[
-        {'nh':'ne','cp':[
-            {'d':'sw','p':[
-                {'bp':'sw','v':3},
-                {'bp':'sw','v':3},
-                {'ph':1,'bx':'-','by':'-'},                        
-                {'ph':1,'bx':'-','by':'-'}                        
-            ]},
-            {'d':'nw','ifnot':['nwn'],'p':[
-                {'bp':'nw','v':3},
-                {'bp':'nw','v':2},
-                {'bp':'nw','v':1},
-                {'ph':0,'bx':'+','by':'+'}                        
-            ]}
-            ],'dp':[]},
-        {'cp':[
-            {'d':'ne','p':[
-                {'bp':'ne','v':3},
-                {'bp':'ne','v':2},
-                {'ph':4,'bx':'+','by':'+'},                        
-                {'ph':4,'bx':'+','by':'+'}                        
-            ]},
-            {'d':'se','p':[
-                {'bp':'se','v':3},
-                {'bp':'se','v':2},
-                {'bp':'se','v':1},
-                {'ph':3,'bx':'-','by':'-'}                        
-            ]}
-            ],'dp':[]}                        
+        {'nh':'ne','cp':['getPointsLiaison_swH'],'dp':[]},
+        {'cp':['getPointsLiaison_neH','getPointsLiaison_seO'],'dp':[]}
     ],
     'nw':[
-        {'nh':'nw','cp':[
-            {'d':'ne','p':[
-                {'bp':'ne','v':3},
-                {'bp':'ne','v':2},
-                {'bp':'ne','v':1},
-                {'ph':3,'bx':'-','by':'+'}                        
-            ]},
-            {'d':'se','p':[
-                {'ph':2,'bx':'+','by':'-'},                        
-                {'ph':2,'bx':'+','by':'-'},                       
-                {'bp':'se','v':2},
-                {'bp':'se','v':3}
-            ]}
-            ],'dp':[]},
-        {'cp':[
-            {'d':'nw','p':[
-                {'ph':5,'bx':'-','by':'+'},                        
-                {'ph':5,'bx':'-','by':'+'},                        
-                {'bp':'nw','v':2},
-                {'bp':'nw','v':3},
-            ]},
-            {'d':'sw','p':[
-                {'bp':'sw','v':3},
-                {'bp':'sw','v':2},
-                {'bp':'sw','v':1},
-                {'ph':0,'bx':'+','by':'-'}                        
-            ]}
-            ],'dp':[]}                        
+        {'nh':'nw','cp':['getPointsLiaison_seO'],'dp':[]},
+        {'cp':['getPointsLiaison_nwH'],'dp':[]}                        
     ],
     's':[
-        {'nh':'s','cp':[
-            {'d':'ne','p':[
-                {'bp':'ne','v':0},
-                {'bp':'ne','v':1},
-                {'bp':'ne','v':2},
-                {'ph':4,'bx':'-','by':''}                        
-            ]},
-            {'d':'nw','p':[
-                {'bp':'nw','v':0},
-                {'bp':'nw','v':1},
-                {'bp':'nw','v':2},
-                {'ph':5,'bx':'+','by':''}                        
-            ]}
-            ],'dp':[]},
-        {'cp':[
-            {'d':'se','p':[
-                {'bp':'se','v':0},
-                {'bp':'se','v':1},
-                {'bp':'se','v':2},
-                {'ph':2,'bx':'-','by':''}                        
-            ]},
-            {'d':'sw','p':[
-                {'bp':'sw','v':0},
-                {'bp':'sw','v':1},
-                {'bp':'sw','v':2},
-                {'ph':1,'bx':'+','by':''}                        
-            ]}
-            ],'dp':[]}                        
+        {'nh':'s','cp':['getPointsLiaison_nwV','getPointsLiaison_neV'],'dp':[]},
+        {'cp':['getPointsLiaison_seV','getPointsLiaison_swV'],'dp':[]}                        
     ],
     'se':[
-        {'nh':'se','cp':[
-            {'d':'nw','p':[
-                {'bp':'nw','v':3},
-                {'bp':'nw','v':3},
-                {'ph':5,'bx':'-','by':'+'},                        
-                {'ph':5,'bx':'-','by':'+'}                        
-            ]},
-            {'d':'sw','p':[
-                {'bp':'sw','v':3},
-                {'bp':'sw','v':2},
-                {'bp':'sw','v':1},
-                {'ph':0,'bx':'+','by':'-'}                        
-            ]}
-            ],'dp':[]},
-        {'cp':[
-            {'d':'se','p':[
-                {'bp':'se','v':3},
-                {'bp':'se','v':2},
-                {'ph':2,'bx':'+','by':'-'},                        
-                {'ph':2,'bx':'+','by':'-'}                        
-            ]},
-            {'d':'ne','p':[
-                {'bp':'ne','v':3},
-                {'bp':'ne','v':2},
-                {'bp':'ne','v':1},
-                {'ph':3,'bx':'-','by':'+'}                        
-            ]}
-            ],'dp':[]}                        
+        {'nh':'se','cp':['getPointsLiaison_nwH'],'dp':[]},
+        {'cp':['getPointsLiaison_seH'],'dp':[]}                        
     ],
     'sw':[
-        {'nh':'sw','ifnot':['nse'],'cp':[
-            {'d':'ne','p':[
-                {'bp':'ne','v':3},
-                {'bp':'ne','v':3},
-                {'ph':4,'bx':'+','by':'+'},                        
-                {'ph':4,'bx':'+','by':'+'}                        
-            ]},
-            {'d':'se','p':[
-                {'bp':'se','v':3},
-                {'bp':'se','v':2},
-                {'bp':'se','v':1},
-                {'ph':3,'bx':'-','by':'-'}                        
-            ]}
-            ],'dp':[]},
-        {'cp':[
-            {'d':'sw','p':[
-                {'bp':'sw','v':3},
-                {'bp':'sw','v':3},
-                {'ph':1,'bx':'-','by':'-'},                        
-                {'ph':1,'bx':'-','by':'-'}                        
-            ]},
-            {'d':'nw','p':[
-                {'ph':0,'bx':'+','by':'+'},                        
-                {'bp':'nw','v':1},
-                {'bp':'nw','v':2},
-                {'bp':'nw','v':3}
-            ]}
-            ],'dp':[]}                        
+        {'nh':'sw','cp':['getPointsLiaison_neH','getPointsLiaison_seH'],'dp':[]},
+        {'cp':['getPointsLiaison_swH'],'dp':[]}                        
     ],
     'n,ne':[
-        {'nh':'n','cp':[
-            {'d':'sw','p':[
-                {'bp':'sw','v':0},
-                {'bp':'sw','v':1},
-                {'bp':'sw','v':2},
-                {'ph':1,'bx':'+','by':''}                        
-            ]}
-            ],'dp':['se']},
-        {'nh':'ne','cp':[
-            {'d':'sw','p':[
-                {'bp':'sw','v':3},
-                {'bp':'sw','v':2},
-                {'ph':1,'bx':'-','by':'-'},
-                {'ph':1,'bx':'-','by':'-'}                        
-            ]},
-            {'d':'ne','p':[
-                {'bp':'ne','v':0},
-                {'bp':'ne','v':1},
-                {'bp':'ne','v':2},
-                {'bp':'ne','v':3}                        
-            ]}
-            ],'dp':[]},
-        {'cp':[
-            {'d':'nw','p':[
-                {'bp':'nw','v':0},
-                {'bp':'nw','v':1},
-                {'bp':'nw','v':2},
-                {'ph':5,'bx':'+','by':''}                        
-            ]},
-            {'d':'se','p':[
-                {'bp':'se','v':3},
-                {'bp':'se','v':2},
-                {'bp':'se','v':1},
-                {'ph':3,'bx':'-','by':'-'}                        
-            ]}
-            ],'dp':['ne']}                        
+        {'nh':'n','cp':['getPointsLiaison_swV'],'dp':['se']},
+        {'nh':'ne','cp':['getPointsLiaison_nwH'],'dp':[]},
+        {'cp':['getPointsLiaison_nwV'],'dp':['ne']}                        
     ],            
     'n,nw':[
-        {'nh':'n','cp':['getPointsFusion_n_n_se'],'dp':['sw']},
-        {'nh':'nw','cp':['getPointsFusion_sw_sw_ne','getPointsFusion_nw_nw_se'],'dp':[]},
-        {'cp':['getPointsFusion_s_s_ne','getPointsFusion_se_se_sw'],'dp':['nw']}                        
+        {'nh':'n','cp':['getPointsLiaison_seV'],'dp':['sw']},
+        {'nh':'nw','cp':['getPointsLiaison_neH'],'dp':[]},
+        {'cp':['getPointsLiaison_neV'],'dp':['nw']}                        
     ],            
     'ne,se':[
         {'nh':'ne','cp':[
@@ -278,32 +144,32 @@ export let hexaMove = {
             ],'dp':[]}                        
     ],
     'sw,nw':[
-        {'nh':'sw','cp':['getPointsFusion_sw_sw_ne'],'dp':['ne']},
-        {'nh':'nw','cp':['getPointsFusion_nw_nw_se','getPointsFusion_nw_nw_se'],'dp':[]},
-        {'cp':['getPointsFusion_se_se_nw','getPointsFusion_ne_ne_sw'],'dp':[]}                        
+        {'nh':'sw','cp':['getPointsLiaison_neH'],'dp':[]},
+        {'nh':'nw','cp':['getPointsLiaison_seO'],'dp':[]},
+        {'cp':['getPointsLiaison_nwH','getPointsLiaison_swH'],'dp':[]}                        
     ],            
     'ne,sw':[
-        {'cp':['getPointsFusion_sw_sw_ne','getPointsFusion_ne_ne_sw'],'dp':[]}
+        {'cp':['getPointsFusion_sw_sw_ne','getPointsLiaison_swH'],'dp':[]}
     ],
     'n,s':[
-        {'cp':['getPointsLiaison_se','getPointsLiaison_sw','getPointsFusion_s_s_nw','getPointsFusion_s_s_ne'],'dp':[]}
+        {'cp':['getPointsLiaison_seV','getPointsLiaison_swV','getPointsLiaison_nwV','getPointsLiaison_neV'],'dp':[]}
     ],
     'se,nw':[
-        {'cp':['getPointsFusion_se_se_nw','getPointsFusion_se_se_sw','getPointsFusion_nw_nw_ne','getPointsFusion_nw_nw_se'],'dp':[]}
+        {'cp':['getPointsLiaison_nwH','getPointsLiaison_swH','getPointsLiaison_seO'],'dp':[]}
     ],
     'ne,nw':[
         {'cp':['getPointsFusion_se_se_nw','getPointsFusion_se_se_sw','getPointsFusion_sw_sw_ne','getPointsFusion_sw_sw_se'],'dp':[]}
     ],
     's,sw':[
-        {'nh':'sw','cp':['getPointsFusion_nw_nw_se'],'dp':['ne']},
-        {'cp':['getPointsFusion_n_n_se','getPointsFusion_ne_ne_nw'],'dp':['sw']}
+        {'nh':'sw','cp':['getPointsLiaison_seO'],'dp':[]},
+        {'cp':['getPointsLiaison_seV'],'dp':['sw']}
     ],
     'se,s':[
-        {'nh':'s','cp':['getPointsFusion_s_s_nw'],'dp':['ne']},
-        {'cp':['getPointsFusion_n_n_sw'],'dp':['se']}
+        {'nh':'s','cp':['getPointsLiaison_nwV'],'dp':['ne']},
+        {'cp':['getPointsLiaison_swV'],'dp':['se']}
     ],
     'se,sw':[
-        {'cp':['getPointsFusion_nw_nw_se','getPointsFusion_nw_nw_ne','getPointsFusion_ne_ne_sw','getPointsFusion_ne_ne_nw'],'dp':[]}
+        {'cp':['getPointsLiaison_seO','getPointsLiaison_neV','getPointsLiaison_swH','getPointsLiaison_nwH'],'dp':[]}
     ],
     'se,s,nw':[
         {'cp':['getPointsFusion_n_n_se'],'dp':['se']}
@@ -319,7 +185,7 @@ export let hexaMove = {
     ],
     'n,sw,nw':[
         {'nh':'sw','cp':['getPointsFusion_sw_sw_ne'],'dp':[]},
-        {'cp':['getPointsFusion_s_s_ne','getPointsFusion_ne_ne_sw'],'dp':['nw']}
+        {'cp':['getPointsFusion_s_s_ne','getPointsLiaison_swH'],'dp':['nw']}
     ],                        
 };
 export function getPointsFusion(k,nh,d){
